@@ -1,0 +1,10 @@
+
+Observer - Plugins für Plugins
+
+
+Dieses Plugin hat Einsprungstellen für zusätzliche Plugins. Diese können verwendet werden,
+um weitere Informationen zu Nutzern in einem Serienbrief unterzubringen. Zum Beispiel
+sind im System der Polizeiakademie Studiengruppen nicht als Datenfelder sondern
+als Strukturen im System abgelegt. Damit diese Information als {{Variable}} im
+Serienbrief verfügbar ist, muss man dann die Datei polizeiakademie.quiet.php in diesem Ordner 
+umbenennen in polizeiakademie.observer.php .
