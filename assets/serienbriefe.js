@@ -26,10 +26,7 @@ STUDIP.serienbriefe = {
         var text = jQuery("#message").val();
         jQuery("#message_delivery").val(text);
         jQuery("#subject_delivery").val(jQuery("#subject").val());
-        text = text.replace(/&/g,"&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")
-                    .replace(/\n/g, "<br>");
+        
         var user_data = jQuery("#datatable > tbody > tr.correct")
             .filter("#user_" + jQuery("#preview_user").val())
             .find("td.user_data")
@@ -39,17 +36,34 @@ STUDIP.serienbriefe = {
             subject = subject.replace("{{" + index + "}}", value ? value : "");
             text = text.replace("{{" + index + "}}", value ? value : "");
         });
-        jQuery("#preview_subject").text(subject);
-        jQuery("#preview_text").html(text);
-        STUDIP.serienbriefe.previewCheck();
-        jQuery('#preview_window').dialog({
-            title: "Vorschau",
-            modal: true,
-            height: jQuery(window).height() * 0.9,
-            width: "90%",
-            show: "fade",
-            hide: "fade"
+        jQuery.ajax({
+            url: STUDIP.URLHelper.getURL("plugins.php/serienbriefe/parse_text"),
+            data: {
+                'subject': subject,
+                'message': text
+            },
+            dataType: 'json',
+            success: function (output) {
+                subject = output.subject;
+                text = output.message;
+                jQuery("#preview_subject").html(subject);
+                jQuery("#preview_text").html(text);
+                STUDIP.serienbriefe.previewCheck();
+                
+                jQuery('#preview_window').dialog({
+                    title: "Vorschau",
+                    modal: false,
+                    height: jQuery(window).height() * 0.9,
+                    width: "90%",
+                    show: "fade",
+                    hide: "fade"
+                });
+            }
         });
+        /*text = text.replace(/&/g,"&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/\n/g, "<br>");*/
     },
     previewCheck: function () {
         jQuery("#fehler_protokoll").children().remove();
@@ -132,7 +146,7 @@ STUDIP.serienbriefe = {
     adminTemplatesDialog: function () {
         jQuery('#templates_window').dialog({
             title: "Template-Verwaltung",
-            modal: true,
+            modal: false,
             height: jQuery(window).height() * 0.9,
             width: "90%",
             show: "fade",

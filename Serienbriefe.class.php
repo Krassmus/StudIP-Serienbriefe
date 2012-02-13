@@ -9,11 +9,12 @@
  *  the License, or (at your option) any later version.
  */
 
+require_once dirname(__file__)."/classes/CSVImportProcessor.php";
 require_once dirname(__file__)."/classes/serienbriefe_templates.php";
 
 $handle = opendir(dirname(__file__)."/plugins");
 while (($file = readdir($handle)) !== false) {
-    if (strpos($file, ".php") !== false) {
+    if (strpos($file, ".observer.php") !== false) {
         include_once dirname(__file__)."/plugins/".$file;
     }
 }
@@ -71,7 +72,11 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
             }
         }
         if (Request::submitted("speichern") && count($_POST) && Request::get("template_id")) {
-            $new_template = new serienbriefe_templates(Request::get("template_id") !== "new" ? Request::get("template_id") : null);
+            if (Request::get("template_id") && (Request::get("template_id") !== "new")) {
+                $new_template = new serienbriefe_templates(Request::get("template_id"));
+            } else {
+                $new_template = new serienbriefe_templates();
+            }
             $new_template['message'] = Request::get("message");
             $new_template['subject'] = Request::get("subject");
             $new_template['title'] = Request::get("title");
@@ -108,6 +113,13 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
         echo $template->render();
     }
     
+    public function parse_text_action() {
+        $output = array();
+        $output['subject'] = studip_utf8encode(formatReady(studip_utf8decode(Request::get("subject"))));
+        $output['message'] = studip_utf8encode(formatReady(studip_utf8decode(Request::get("message"))));
+        echo json_encode($output);
+    }
+    
     protected function getUserdata($data) {
         $db = DBManager::get();
         if ($data->username) {
@@ -115,10 +127,16 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
         } elseif ($data->email) {
             $data->user_id = $db->query("SELECT user_id FROM auth_user_md5 WHERE Email = ".$db->quote($data['email'])." ")->fetch(PDO::FETCH_COLUMN, 0);
         }
-        $user = new User($data->user_id);
+        $user = $db->query(
+            "SELECT * " .
+            "FROM auth_user_md5 " .
+                "INNER JOIN user_info ON (auth_user_md5.user_id = user_info.user_id) " .
+            "WHERE auth_user_md5.user_id = ".$db->quote($data->user_id)." " .
+        "")->fetch(PDO::FETCH_ASSOC);
         if ($data->user_id && !$data->name) {
-            $data->name = $user->getFullName("no_title");
-            $data->anrede = ($user['geschlecht'] == 2 ? "Frau " : ($user['geschlecht'] == 1 ? "Herr " : "")). $user->getFullName("full");
+            $data->name = get_fullname($data->user_id, "no_title");
+            $data->anrede = ($user['geschlecht'] == 2 ? "Frau " : ($user['geschlecht'] == 1 ? "Herr " : "")). get_fullname($data->user_id, "full");
+            $data->sehrgeehrte = ($user['geschlecht'] == 2 ? "Sehr geehrte Frau " : ($user['geschlecht'] == 1 ? "Sehr geehrter Herr " : "Sehr geehrte(r) ")). get_fullname($data->user_id, "full");
         }
         if ($data->user_id && !$data->email) {
             $data->email = $user['Email'];

@@ -80,6 +80,19 @@
     #preview_text {
         
     }
+	input:-moz-placeholder {
+		color: rgba(0,0,0,0.4);
+	} 
+	input::-webkit-input-placeholder {
+		color: rgba(0,0,0,0.4);
+	}
+	textarea:-moz-placeholder {
+		color: rgba(0,0,0,0.4);
+	} 
+	textarea::-webkit-input-placeholder {
+		color: rgba(0,0,0,0.4);
+	}
+
 </style>
 
 
@@ -99,8 +112,9 @@
 <div style="float: right; width: 23%;" id="replacement_div" class="sb_box">
     <h4><?= _("Mögliche Ersetzungen") ?></h4>
     <ul style="list-style-type: none; padding: 0px;" id="replacements">
-        <li><a onClick="STUDIP.serienbriefe.insertAtCursor(jQuery(this).text()); return false;">{{anrede}}</a></li>
         <li><a onClick="STUDIP.serienbriefe.insertAtCursor(jQuery(this).text()); return false;">{{name}}</a></li>
+        <li><a onClick="STUDIP.serienbriefe.insertAtCursor(jQuery(this).text()); return false;">{{anrede}}</a></li>
+        <li><a onClick="STUDIP.serienbriefe.insertAtCursor(jQuery(this).text()); return false;">{{sehrgeehrte}}</a></li>
         <li><a onClick="STUDIP.serienbriefe.insertAtCursor(jQuery(this).text()); return false;">{{studiengruppe}}</a></li>
         <li><a onClick="STUDIP.serienbriefe.insertAtCursor(jQuery(this).text()); return false;">{{studienort}}</a></li>
         <? foreach ($datafields as $datafield) : ?>
@@ -159,7 +173,12 @@ if (Request::get("load_template")) {
                 <? foreach ($_SESSION['SERIENBRIEF_CSV']['header'] as $header_name) : ?>
                 <td data="<?= htmlReady($header_name) ?>"><?= htmlReady($line[$header_name]) ?></td>
                 <? endforeach ?>
-                <td style="display: none;" class="user_data"><?= htmlReady(json_encode($line)) ?></td>
+                <? $line_utf8 = array();
+                foreach ($line as $key => $value) {
+                    $line_utf8[$key] = studip_utf8encode($value);
+                }
+                ?>
+                <td style="display: none;" class="user_data"><?= htmlReady(json_encode($line_utf8)) ?></td>
             </tr>
             <? endforeach ?>
         </tbody>
@@ -194,11 +213,12 @@ if (Request::get("load_template")) {
             <input type="hidden" name="subject_delivery" id="subject_delivery">
             <textarea style="display: none" name="message_delivery" id="message_delivery"></textarea>
             <?= makebutton("abschicken", "input") ?>
+            <a href="" onClick="jQuery('#preview_window').dialog('close'); return false;"><?= makebutton("abbrechen", "img") ?></a>
         </div>
     </form>
 </div>
 
-<div id="templates_window" style="display: none">
+<div id="templates_window" style="display: none;">
     <div id="add_new_template" class="sb_box">
         <form action="?" method="post">
             <? if (Request::option("edit_template")) { 
@@ -208,7 +228,7 @@ if (Request::get("load_template")) {
                 <input type="hidden" name="template_id" value="<?= Request::get("edit_template") ? $edit_template->getId() : "new" ?>">
                 <label>
                     <?= _("Name des Templates") ?>
-                    <br><input type="text" name="title" style="width: 95%;" value="<?= Request::get("edit_template") ? htmlReady($edit_template['title']) : "" ?>">
+                    <br><input title="<?= _("Geben Sie einen Namen ein") ?>" type="text" required="required" name="title" style="width: 95%;" value="<?= Request::get("edit_template") ? htmlReady($edit_template['title']) : "" ?>">
                 </label>
             </div>
             <div style="display: inline-block; vertical-align: middle; width: 25%;">
