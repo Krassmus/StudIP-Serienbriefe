@@ -11,7 +11,7 @@
  * @since       2.1
  */
 
-class CSVImportProcessor {
+class CSVImportProcessor_serienbriefe {
 
     static public function CSV2Array($content, $delim = ';', $encl = '"', $optional = 1) {
 		if ($content[strlen($content)-1]!="\r" && $content[strlen($content)-1]!="\n")

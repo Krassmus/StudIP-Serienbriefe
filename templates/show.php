@@ -167,7 +167,9 @@ if (Request::get("load_template")) {
             </tr>
         </thead>
         <tbody>
+            <? $some_users_correct = false ?>
             <? foreach ($_SESSION['SERIENBRIEF_CSV']['content'] as $line) : ?>
+            <? !$line['user_id'] || $some_users_correct = true ?>
             <tr id="user_<?= $line['user_id'] ?>" class="<?= !$line['user_id'] ? "unfinished" : "correct" ?>">
                 <td><?= !$line['user_id'] ? Assets::img("icons/16/red/decline.png", array('title' => _("Nutzer konnte nicht anhand von Username oder Email identifiziert werden."), 'class' => "text-top")) : "" ?></td>
                 <? foreach ($_SESSION['SERIENBRIEF_CSV']['header'] as $header_name) : ?>
@@ -185,9 +187,11 @@ if (Request::get("load_template")) {
     </table>
 </div>
 
+<? if ($some_users_correct) : ?>
 <div style="text-align: center;">
     <a onClick="STUDIP.serienbriefe.preview()"><?= makebutton("vorschau") ?></a>
 </div>
+<? endif ?>
 
 <? endif ?>
 
@@ -312,7 +316,7 @@ $infobox = array(
     )
 );
 
-if (is_array($_SESSION['SERIENBRIEF_CSV']['content']) && count($_SESSION['SERIENBRIEF_CSV']['content'])) {
+if ($some_users_correct) {
     $infobox['content'][1]['eintrag'][] = array(
         'icon' => "icons/16/black/play", 
         'text' => '<a onClick="STUDIP.serienbriefe.preview()">'._("Vorschau").'</a>'

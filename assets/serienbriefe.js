@@ -31,6 +31,9 @@ STUDIP.serienbriefe = {
             .filter("#user_" + jQuery("#preview_user").val())
             .find("td.user_data")
             .text();
+        if (!user_data) {
+            return false;
+        }
         user_data = jQuery.parseJSON(user_data);
         jQuery.each(user_data, function (index, value) {
             subject = subject.replace("{{" + index + "}}", value ? value : "");

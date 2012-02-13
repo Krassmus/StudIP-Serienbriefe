@@ -91,7 +91,7 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
         }
         if ($_FILES['csv_file']) {
             $_SESSION['SERIENBRIEF_CSV'] = array('header' => array(), 'content' => array());
-            $content = CSVImportProcessor::getCSVDataFromFile($_FILES["csv_file"]['tmp_name']);
+            $content = CSVImportProcessor_serienbriefe::getCSVDataFromFile($_FILES["csv_file"]['tmp_name']);
             $_SESSION['SERIENBRIEF_CSV']['header'] = array_shift($content);
             foreach ($content as $line) {
                 $data = new stdClass();
