@@ -112,13 +112,13 @@
 <div style="float: right; width: 23%;" id="replacement_div" class="sb_box">
     <h4><?= _("Mögliche Ersetzungen") ?></h4>
     <ul style="list-style-type: none; padding: 0px;" id="replacements">
-        <li><a onClick="STUDIP.serienbriefe.insertAtCursor(jQuery(this).text()); return false;">{{name}}</a></li>
-        <li><a onClick="STUDIP.serienbriefe.insertAtCursor(jQuery(this).text()); return false;">{{anrede}}</a></li>
-        <li><a onClick="STUDIP.serienbriefe.insertAtCursor(jQuery(this).text()); return false;">{{sehrgeehrte}}</a></li>
-        <li><a onClick="STUDIP.serienbriefe.insertAtCursor(jQuery(this).text()); return false;">{{studiengruppe}}</a></li>
-        <li><a onClick="STUDIP.serienbriefe.insertAtCursor(jQuery(this).text()); return false;">{{studienort}}</a></li>
+        <li><a onClick="STUDIP.serienbriefe.insertAtCursor(this); return false;">{{name}}</a></li>
+        <li><a onClick="STUDIP.serienbriefe.insertAtCursor(this); return false;">{{anrede}}</a></li>
+        <li><a onClick="STUDIP.serienbriefe.insertAtCursor(this); return false;">{{sehrgeehrte}}</a></li>
+        <li><a onClick="STUDIP.serienbriefe.insertAtCursor(this); return false;">{{studiengruppe}}</a></li>
+        <li><a onClick="STUDIP.serienbriefe.insertAtCursor(this); return false;">{{studienort}}</a></li>
         <? foreach ($datafields as $datafield) : ?>
-        <li><a onClick="STUDIP.serienbriefe.insertAtCursor(jQuery(this).text()); return false;">{{<?= htmlReady($datafield['name']) ?>}}</a></li>
+        <li><a onClick="STUDIP.serienbriefe.insertAtCursor(this); return false;">{{<?= htmlReady($datafield['name']) ?>}}</a></li>
         <? endforeach ?>
         <? if (is_array($_SESSION['SERIENBRIEF_CSV']['header'])) foreach ($_SESSION['SERIENBRIEF_CSV']['header'] as $header_name) : ?>
         <li><a onClick="STUDIP.serienbriefe.insertAtCursor(jQuery(this).text()); return false;">{{<?= htmlReady($header_name) ?>}}</a></li>
