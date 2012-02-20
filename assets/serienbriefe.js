@@ -1,7 +1,6 @@
 STUDIP.serienbriefe = {
     activeElement: null,
-    insertAtCursor: function (field) {
-        var myValue = jQuery(field).text();
+    insertAtCursor: function (myValue) {
         if (!STUDIP.serienbriefe.activeElement) {
             STUDIP.serienbriefe.activeElement = window.document.message.message;
         }
@@ -21,7 +20,6 @@ STUDIP.serienbriefe = {
         } else {
             STUDIP.serienbriefe.activeElement.value += myValue;
         }
-        //jQuery(STUDIP.serienbriefe.activeElement).focus();
     },
     preview: function () {
         var subject = jQuery("#subject").val();

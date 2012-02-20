@@ -177,7 +177,8 @@ if (Request::get("load_template")) {
                 <? endforeach ?>
                 <? $line_utf8 = array();
                 foreach ($line as $key => $value) {
-                    $line_utf8[$key] = studip_utf8encode($value);
+                    unset($line_utf8[$key]);
+                    $line_utf8[studip_utf8encode($key)] = studip_utf8encode($value);
                 }
                 ?>
                 <td style="display: none;" class="user_data"><?= htmlReady(json_encode($line_utf8)) ?></td>
