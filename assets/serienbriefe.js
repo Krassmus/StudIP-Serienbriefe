@@ -36,8 +36,12 @@ STUDIP.serienbriefe = {
         }
         user_data = jQuery.parseJSON(user_data);
         jQuery.each(user_data, function (index, value) {
-            subject = subject.replace("{{" + index + "}}", value ? value : "");
-            text = text.replace("{{" + index + "}}", value ? value : "");
+            while (subject.indexOf("{{" + index + "}}") !== -1) {
+                subject = subject.replace("{{" + index + "}}", value ? value : "");
+            }
+            while (text.indexOf("{{" + index + "}}") !== -1) {
+                text = text.replace("{{" + index + "}}", value ? value : "");
+            }
         });
         jQuery.ajax({
             url: STUDIP.URLHelper.getURL("plugins.php/serienbriefe/parse_text"),
