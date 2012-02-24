@@ -290,7 +290,7 @@ if (Request::get("load_template")) {
                     <td><?= htmlReady($template['title']) ?></td>
                     <td><?= htmlReady($template['subject']) ?></td>
                     <td title="<?= htmlReady($template['message']) ?>"><?= htmlReady(mila($template['message']), 250) ?></td>
-                    <td><?= $template['notenbekanntgabe'] ? Assets::img("icons/16/grey/decline", array('title' => _("Serienbrief ist keine Notenbekanntgabe"))) : Assets::img("icons/16/grey/accept", array('title' => _("Serienbrief ist Notenbekanntgabe"))) ?></td>
+                    <td><?= $template['notenbekanntgabe'] ? Assets::img("icons/16/grey/accept", array('title' => _("Serienbrief ist Notenbekanntgabe"))) : Assets::img("icons/16/grey/decline", array('title' => _("Serienbrief ist keine Notenbekanntgabe"))) ?></td>
                     <? if (get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")) : ?>
                     <td><?= htmlReady(get_fullname($template['user_id'])) ?></td>
                     <? endif ?>
