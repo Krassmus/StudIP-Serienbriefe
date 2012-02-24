@@ -49,26 +49,30 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
         if (Request::submitted("abschicken") && Request::get("message_delivery") && Request::get("subject_delivery")) {
             $count = 0;
             $messaging = new messaging();
+            $_SESSION['not_delivered_users'] = array();
             if (is_array($_SESSION['SERIENBRIEF_CSV']['content'])) foreach ($_SESSION['SERIENBRIEF_CSV']['content'] as $user_data) {
-                if ($user_data['user_id']) {
+                if ($user_data['user_id'] && (!get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD") || !Request::int('notenbekanntgabe') || $user_data[get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")])) {
                     $text = Request::get("message_delivery");
                     $subject = Request::get("subject_delivery");
                     foreach ($user_data as $key => $value) {
                         $subject = str_replace("{{".$key."}}", $value, $subject);
                         $text = str_replace("{{".$key."}}", $value, $text);
                     }
-                    //$success = $messaging->sendingEmail($rec_user_id, $snd_user_id, $message, $subject, $message_id);
-                    //StudipMail::sendMessage($user_data['email'], $subject, $text);
-                    $success = $messaging->insert_message($text, get_username($user_data['user_id']), $GLOBALS['user']->id, '', '', '', '', $subject, true);
+                    $success = $messaging->insert_message(addslashes($text), get_username($user_data['user_id']), $GLOBALS['user']->id, '', '', '', '', $subject, true);
                     if ($success) {
                         $count++;
                     } else {
                         $msg[] = array("error", sprintf("Nachricht konnte nicht an %s versendet werden.", $user_data['email']));
                     }
+                } else {
+                    $_SESSION['not_delivered_users'][] = $user_data;
                 }
             }
             if ($count > 0) {
                 $msg[] = array("success", sprintf("Nachricht wurde an %s Personen versendet.", $count));
+            }
+            if (count($_SESSION['not_delivered_users']) > 0) {
+                $msg[] = array("info", sprintf("An %s Personen wurde die Nachricht nicht versendet. %sBericht dazu%s.", count($_SESSION['not_delivered_users']), '<a href="'.PluginEngine::getLink($this, array(), 'users_not_delivered_csv').'">', '</a>'));
             }
         }
         if (Request::submitted("speichern") && count($_POST) && Request::get("template_id")) {
@@ -80,6 +84,7 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
             $new_template['message'] = Request::get("message");
             $new_template['subject'] = Request::get("subject");
             $new_template['title'] = Request::get("title");
+            $new_template['notenbekanntgabe'] = Request::int("notenbekanntgabe_template");
             $new_template['user_id'] = $GLOBALS['user']->id;
             $new_template->store();
             $msg[] = array("success", _("Template wurde gespeichert."));
@@ -92,6 +97,7 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
         if ($_FILES['csv_file']) {
             $_SESSION['SERIENBRIEF_CSV'] = array('header' => array(), 'content' => array());
             $content = CSVImportProcessor_serienbriefe::getCSVDataFromFile($_FILES["csv_file"]['tmp_name']);
+            @unlink($_FILES["csv_file"]['tmp_name']);
             $_SESSION['SERIENBRIEF_CSV']['header'] = array_shift($content);
             foreach ($content as $line) {
                 $data = new stdClass();
@@ -118,6 +124,49 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
         $output['subject'] = studip_utf8encode(formatReady(studip_utf8decode(Request::get("subject"))));
         $output['message'] = studip_utf8encode(formatReady(studip_utf8decode(Request::get("message"))));
         echo json_encode($output);
+    }
+    
+    public function users_not_delivered_csv_action() {
+        $output = "";
+        $header = array();
+        foreach ($_SESSION['not_delivered_users'] as $user_line) {
+            if (count($user_line) > count($header)) {
+                $header = array_keys($user_line);
+            }
+        }
+        $header[] = "Problem";
+        if (is_array($_SESSION['not_delivered_users'])) {
+            foreach ($header as $key => $fieldname) {
+                if ($key > 0) {
+                    $output .= ";";
+                }
+                $output .= '"'.str_replace('"', '""', $fieldname).'"';
+            }
+            foreach ($_SESSION['not_delivered_users'] as $user_data) {
+                $output .= "\n";
+                $number = 0;
+                foreach ($header as $field) {
+                    if ($number > 0) {
+                        $output .= ";";
+                    }
+                    if ($field !== "Problem") {
+                        $output .= '"'.str_replace('"', '""', $user_data[$field]).'"';
+                    } else {
+                        $problem = "";
+                        if (!$user_data['user_id']) {
+                            $problem = "Kein gültiger username oder Emailadresse.";
+                        } elseif(get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD") && !$user_data[get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")]) {
+                            $problem = "Nutzer ist nicht einverstanden mit dem Verschicken von Noten per Mail.";
+                        }
+                        $output .= '"'.$problem.'"';
+                    }
+                    $number++;
+                }
+            }
+        }
+        header("Content-Type: text/csv");
+        header("Content-Disposition: attachment; filename=serienbrief_bericht.csv");
+        echo $output;
     }
     
     protected function getUserdata($data) {
@@ -156,8 +205,6 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
         
         return $data;
     }
-    
-    
     
     protected function getDisplayName() {
         return _("Serienbriefe");

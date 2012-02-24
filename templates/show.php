@@ -11,22 +11,6 @@
 ?>
 
 <style>
-    /*h2 {
-        color: black;
-        font-size: 1.8em;
-    }
-    h2:after {
-        opacity: 0.95;
-        content: " ";
-        width: 99%;
-        height: 32px;
-        margin-top: -35px;
-        display: block;
-        position: relative;
-        
-        background-image: url('<?= $GLOBALS['ABSOLUTE_URI_STUDIP'].$plugin->getPluginPath()."/assets/gradient_h2.png" ?>');
-        background-repeat: repeat-x;
-    }*/
     a {
         cursor: pointer;
     }
@@ -53,6 +37,13 @@
         border-radius: 10px;
         box-shadow: 0px 0px 4px #c0c0c0;
         font-size: 1.2em;
+        
+    }
+    #replacements {
+        text-indent: -12px;
+    }
+    #replacements li {
+        padding-left: 12px;
     }
     #submit_button {
         margin: 20px;
@@ -129,11 +120,13 @@
 <? 
 $text = "";
 $subject = "";
+$notenbekanntgabe = Request::int("notenbekanntgabe") || Request::int("notenbekanntgabe_template");
 if (Request::get("load_template")) {
     foreach ($templates as $template) {
         if (Request::get("load_template") === $template->getId()) {
             $text = $template['message'];
             $subject = $template['subject'];
+            $notenbekanntgabe = $template['notenbekanntgabe'];
         }
     }
 } else {
@@ -151,6 +144,7 @@ if (Request::get("load_template")) {
 <div style="margin: 20px; text-align: center; clear: both;">
         <input type="file" name="csv_file" class="text-bottom">
         <?= makebutton("absenden", "input") ?>
+        <input type="hidden" name="notenbekanntgabe" id="notenbekanntgabe_hidden" value="<?= $notenbekanntgabe ? 1 : 0 ?>">
         <a href="?reset=1"><?= makebutton("zuruecksetzen") ?></a>
 </div>
 
@@ -161,6 +155,9 @@ if (Request::get("load_template")) {
         <thead>
             <tr>
                 <th></th>
+                <? if (get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")) : ?>
+                <th></th>
+                <? endif ?>
                 <? foreach ($_SESSION['SERIENBRIEF_CSV']['header'] as $header_name) : ?>
                 <th>{{<?= htmlReady($header_name) ?>}}</th>
                 <? endforeach ?>
@@ -170,8 +167,14 @@ if (Request::get("load_template")) {
             <? $some_users_correct = false ?>
             <? foreach ($_SESSION['SERIENBRIEF_CSV']['content'] as $line) : ?>
             <? !$line['user_id'] || $some_users_correct = true ?>
-            <tr id="user_<?= $line['user_id'] ?>" class="<?= !$line['user_id'] ? "unfinished" : "correct" ?>">
+            <tr 
+                    id="user_<?= $line['user_id'] ?>" 
+                    class="<?= ($line['user_id'] ? " correct" : " unfinished").((!get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD") || $line[get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")]) ? " allowed" : " denied") ?>"
+                    >
                 <td><?= !$line['user_id'] ? Assets::img("icons/16/red/decline.png", array('title' => _("Nutzer konnte nicht anhand von Username oder Email identifiziert werden."), 'class' => "text-top")) : "" ?></td>
+                <? if (get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")) : ?>
+                <td><?= !$line[get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")] ? Assets::img("icons/16/red/decline.png", array('title' => _("Nutzer ist nicht einverstanden, seine Noten per Mail zu bekommen."), 'class' => "text-top")) : "" ?></td>
+                <? endif ?>
                 <? foreach ($_SESSION['SERIENBRIEF_CSV']['header'] as $header_name) : ?>
                 <td data="<?= htmlReady($header_name) ?>"><?= htmlReady($line[$header_name]) ?></td>
                 <? endforeach ?>
@@ -190,7 +193,7 @@ if (Request::get("load_template")) {
 
 <? if ($some_users_correct) : ?>
 <div style="text-align: center;">
-    <a onClick="STUDIP.serienbriefe.preview()"><?= makebutton("vorschau") ?></a>
+    <a onClick="STUDIP.serienbriefe.preview(true)"><?= makebutton("vorschau") ?></a>
 </div>
 <? endif ?>
 
@@ -203,7 +206,7 @@ if (Request::get("load_template")) {
         <ul id="fehler_protokoll"></ul>
         <div style="text-align: center;">
             <label><?= _("Vorschau für ") ?>
-                <select id="preview_user" onChange="STUDIP.serienbriefe.preview();">
+                <select id="preview_user" onChange="STUDIP.serienbriefe.preview(false);">
                     <? foreach ($_SESSION['SERIENBRIEF_CSV']['content'] as $user_data) :
                         if ($user_data['user_id']) : ?>
                     <option value="<?= htmlReady($user_data['user_id']) ?>"><?= htmlReady($user_data['name']) ?></option>
@@ -216,6 +219,7 @@ if (Request::get("load_template")) {
         <div id="preview_text" class="sb_box"></div>
         <div id="submit_button">
             <input type="hidden" name="subject_delivery" id="subject_delivery">
+            <input type="hidden" name="notenbekanntgabe" id="notenbekanntgabe_delivery" value="<?= $notenbekanntgabe ? 1 : 0 ?>">
             <textarea style="display: none" name="message_delivery" id="message_delivery"></textarea>
             <?= makebutton("abschicken", "input") ?>
             <a href="" onClick="jQuery('#preview_window').dialog('close'); return false;"><?= makebutton("abbrechen", "img") ?></a>
@@ -226,23 +230,34 @@ if (Request::get("load_template")) {
 <div id="templates_window" style="display: none;">
     <div id="add_new_template" class="sb_box">
         <form action="?" method="post">
+            <? $is_note = get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD") ?>
             <? if (Request::option("edit_template")) { 
                    $edit_template = new serienbriefe_templates(Request::get("edit_template")); 
                } ?>
-            <div style="display: inline-block; vertical-align: middle; width: 25%;">
+            <div style="display: inline-block; vertical-align: middle; width: <?= $is_note ? "20" : "25" ?>%;">
                 <input type="hidden" name="template_id" value="<?= Request::get("edit_template") ? $edit_template->getId() : "new" ?>">
                 <label>
                     <?= _("Name des Templates") ?>
                     <br><input title="<?= _("Geben Sie einen Namen ein") ?>" type="text" required="required" name="title" style="width: 95%;" value="<?= Request::get("edit_template") ? htmlReady($edit_template['title']) : "" ?>">
                 </label>
             </div>
-            <div style="display: inline-block; vertical-align: middle; width: 25%;">
+            <div style="display: inline-block; vertical-align: middle; width: <?= $is_note ? "20" : "25" ?>%;">
                 <label>
                     <?= _("Betreff") ?>
                     <br><input type="text" name="subject" style="width: 95%;" value="<?= Request::get("edit_template") ? htmlReady($edit_template['subject']) : "" ?>">
                 </label>
             </div>
-            <div style="display: inline-block; vertical-align: middle; width: 48%;">
+            <? if ($is_note) : ?>
+            <div style="display: inline-block; vertical-align: middle; width: 15%;">
+                <label>
+                    <?= _("Notenbekanntgabe") ?>
+                    <br><input type="checkbox" name="notenbekanntgabe_template" value="1"<?= (Request::get("edit_template") && $edit_template['notenbekanntgabe']) ? " checked" : "" ?>>
+                </label>
+            </div>
+            <? else : ?>
+            <input type="hidden" name="notenbekanntgabe_template" value="<?= Request::get("edit_template") && $edit_template['notenbekanntgabe'] ? "1" : "0" ?>">
+            <? endif ?>
+            <div style="display: inline-block; vertical-align: middle; width: <?= $is_note ? "42" : "48" ?>%;">
                 <textarea name="message" style="width: 95%; height: 200px; font-size: 0.7em;"><?= Request::get("edit_template") ? htmlReady($edit_template['message']) : "" ?></textarea>
             </div>
             <div style="text-align: center;">
@@ -259,6 +274,9 @@ if (Request::get("load_template")) {
                     <th><?= _("Template") ?></th>
                     <th><?= _("Betreff") ?></th>
                     <th><?= _("Nachrichtenkörper") ?></th>
+                    <? if (get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")) : ?>
+                    <th><?= _("Notenbekanntgabe") ?></th>
+                    <? endif ?>
                     <th><?= _("Autor") ?></th>
                     <th><?= _("Letzte Änderung") ?></th>
                     <th></th>
@@ -272,7 +290,10 @@ if (Request::get("load_template")) {
                     <td><?= htmlReady($template['title']) ?></td>
                     <td><?= htmlReady($template['subject']) ?></td>
                     <td title="<?= htmlReady($template['message']) ?>"><?= htmlReady(mila($template['message']), 250) ?></td>
+                    <td><?= $template['notenbekanntgabe'] ? Assets::img("icons/16/grey/decline", array('title' => _("Serienbrief ist keine Notenbekanntgabe"))) : Assets::img("icons/16/grey/accept", array('title' => _("Serienbrief ist Notenbekanntgabe"))) ?></td>
+                    <? if (get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")) : ?>
                     <td><?= htmlReady(get_fullname($template['user_id'])) ?></td>
+                    <? endif ?>
                     <td><?= date("j.n.Y", $template['chdate']) ?></td>
                     <td><a title="<?= _("Template verwenden") ?>" onClick="STUDIP.serienbriefe.loadTemplate('<?= $template->getId() ?>')"><?= Assets::img("icons/16/blue/arr_1right.png") ?></a></td>
                     <td><a title="<?= _("Template bearbeiten") ?>" onClick="STUDIP.serienbriefe.editTemplate('<?= $template->getId() ?>')"><?= Assets::img("icons/16/blue/edit.png") ?></a></td>
@@ -320,7 +341,18 @@ $infobox = array(
 if ($some_users_correct) {
     $infobox['content'][1]['eintrag'][] = array(
         'icon' => "icons/16/black/play", 
-        'text' => '<a onClick="STUDIP.serienbriefe.preview()">'._("Vorschau").'</a>'
+        'text' => '<a onClick="STUDIP.serienbriefe.preview(true)">'._("Vorschau").'</a>'
+    );
+}
+
+if (get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")) {
+    $infobox['content'][1]['eintrag'][] = array(
+        'icon' => "icons/16/black/doctoral_cap", 
+        'text' => 
+            '<label title="'._("Notenbekanntgaben werden nur an Nutzer verschickt, die diesem Verbreitungsweg zugestimmt haben.").'">'
+                ._("Serienbrief ist Notenbekanntgabe")
+                .'<input type="checkbox" value="1" id="notenbekanntgabe" name="notenbekanntgabe" class="text-bottom"'.($notenbekanntgabe ? " checked" : "").' onCHange="jQuery('."'#notenbekanntgabe_hidden, #notenbekanntgabe_delivery'".').val(this.checked ? 1 : 0);">'
+            .'</label>'
     );
 }
 
@@ -328,7 +360,9 @@ $templates_select = '<select id="template_action" onChange="STUDIP.serienbriefe.
 $templates_select .= '<option value="">Template ...</option>';
 if ($templates) {
     foreach ($templates as $template) {
-        $templates_select .= '<option value="'.htmlReady($template->getId()).'" title="'.htmlReady($template['subject']).'">&nbsp;-&nbsp;&nbsp;'.htmlReady($template['title']).'</option>';
+        $templates_select .= 
+            '<option value="'.htmlReady($template->getId()).'" title="'.htmlReady($template['subject']).'">'
+                .'&nbsp;-&nbsp;&nbsp;'.htmlReady($template['title']).'</option>';
     }
 }
 $templates_select .= '<option value="admin" onClick="STUDIP.serienbriefe.showTemplates();">'._("Templateverwaltung").'</option>';

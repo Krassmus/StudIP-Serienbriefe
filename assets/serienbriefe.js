@@ -21,14 +21,31 @@ STUDIP.serienbriefe = {
             STUDIP.serienbriefe.activeElement.value += myValue;
         }
     },
-    preview: function () {
+    preview: function (reload_select_box) {
         var subject = jQuery("#subject").val();
         var text = jQuery("#message").val();
         jQuery("#message_delivery").val(text);
         jQuery("#subject_delivery").val(jQuery("#subject").val());
         
-        var user_data = jQuery("#datatable > tbody > tr.correct")
-            .filter("#user_" + jQuery("#preview_user").val())
+        var user_data = jQuery("#datatable > tbody > tr.correct");
+        if (jQuery("#notenbekanntgabe").is(":checked")) {
+            user_data = user_data.filter(".allowed");
+        }
+        
+        //relevante Nutzer in die Selectbox packen
+        if (reload_select_box) {
+            jQuery("#preview_user > option").remove();
+            jQuery.each(user_data, function (index, user_line) {
+                user_line = jQuery(user_line);
+                if (jQuery("#notenbekanntgabe").length === 0 
+                        || !jQuery("#notenbekanntgabe").is(":checked") || user_line.is(".allowed")) {
+                    user = jQuery.parseJSON(user_line.find("td.user_data").text());
+                    jQuery("#preview_user").append(jQuery("<option/>").text(user.name).attr('value', user.user_id));
+                }
+            });
+        }
+        
+        user_data = user_data.filter("#user_" + jQuery("#preview_user").val())
             .find("td.user_data")
             .text();
         if (!user_data) {
@@ -67,10 +84,6 @@ STUDIP.serienbriefe = {
                 });
             }
         });
-        /*text = text.replace(/&/g,"&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")
-                    .replace(/\n/g, "<br>");*/
     },
     previewCheck: function () {
         jQuery("#fehler_protokoll").children().remove();
@@ -102,7 +115,11 @@ STUDIP.serienbriefe = {
             var missing_info = 0;
             var missing_user = null;
             var missing_parameter = [];
-            jQuery('#datatable > tbody > tr.correct').each(function () {
+            var user_data = jQuery('#datatable > tbody > tr.correct');
+            if (jQuery("#notenbekanntgabe").is(":checked")) {
+                user_data = user_data.filter(".allowed");
+            }
+            user_data.each(function () {
                 var user_data = jQuery.parseJSON(jQuery(this).find(".user_data").text());
                 if (user_data.user_id) {
                     var check = true;
@@ -135,6 +152,7 @@ STUDIP.serienbriefe = {
         if (choice === "save") {
             jQuery("#add_new_template input[name=template_id]").val("new");
             jQuery("#add_new_template input[name=subject]").val(jQuery("#subject").val());
+            jQuery("#add_new_template input[name=notenbekanntgabe_template]").attr("checked", jQuery("#notenbekanntgabe").is(":checked") ? "checked" : "");
             jQuery("#add_new_template textarea").val(jQuery("#message").val());
             jQuery("#add_new_template").show();
             STUDIP.serienbriefe.adminTemplatesDialog();
