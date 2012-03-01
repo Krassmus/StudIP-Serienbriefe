@@ -117,10 +117,16 @@
     </ul>
 </div>
 
-<? 
+<?
 $text = "";
 $subject = "";
-$notenbekanntgabe = Request::int("notenbekanntgabe") || Request::int("notenbekanntgabe_template");
+if (Request::submitted("notenbekanntgabe")) {
+    $notenbekanntgabe = Request::int("notenbekanntgabe");
+} elseif(Request::submitted("notenbekanntgabe_template")) {
+    $notenbekanntgabe = Request::int("notenbekanntgabe_template");
+} else {
+    $notenbekanntgabe = true;
+}
 if (Request::get("load_template")) {
     foreach ($templates as $template) {
         if (Request::get("load_template") === $template->getId()) {

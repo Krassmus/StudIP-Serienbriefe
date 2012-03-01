@@ -25,7 +25,7 @@ class CSVImportProcessor_serienbriefe {
 		$linecount = 0;
 
 		for ($i = 0; $i < count($treffer[3]);$i++) {
-			$liste[$linecount][] = str_replace($encl.$encl, $encl, trim($treffer[1][$i],$encl));
+			$liste[$linecount][] = trim(str_replace($encl.$encl, $encl, trim($treffer[1][$i],$encl)));
 			if ($treffer[3][$i] != $delim) $linecount++;
 		}
 		return $liste;
