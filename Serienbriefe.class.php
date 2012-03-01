@@ -40,8 +40,14 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
     
     public function index_action() {
         PageLayout::addHeadElement("script", array('src' => $this->getPluginURL()."/assets/serienbriefe.js"), "");
+        if ($_SESSION['SERIENBRIEF_CSV']) {
+            if (!is_string($_SESSION['SERIENBRIEF_CSV'])) {
+                $_SESSION['SERIENBRIEF_CSV'] = "";
+            }
+            $GLOBALS['SERIENBRIEF_CSV'] = unserialize(gzuncompress($_SESSION['SERIENBRIEF_CSV']));
+        }
         if (Request::get("reset")) {
-            $_SESSION['SERIENBRIEF_CSV'] = array('header' => array(), 'content' => array());
+            $GLOBALS['SERIENBRIEF_CSV'] = array('header' => array(), 'content' => array());
         }
         $db = DBManager::get();
         $msg = array();
@@ -50,7 +56,7 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
             $count = 0;
             $messaging = new messaging();
             $_SESSION['not_delivered_users'] = array();
-            if (is_array($_SESSION['SERIENBRIEF_CSV']['content'])) foreach ($_SESSION['SERIENBRIEF_CSV']['content'] as $user_data) {
+            if (is_array($GLOBALS['SERIENBRIEF_CSV']['content'])) foreach ($GLOBALS['SERIENBRIEF_CSV']['content'] as $user_data) {
                 if ($user_data['user_id'] && (!get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD") || !Request::int('notenbekanntgabe') || $user_data[get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")])) {
                     $text = Request::get("message_delivery");
                     $subject = Request::get("subject_delivery");
@@ -95,19 +101,19 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
             $msg[] = array("success", _("Template wurde gelöscht."));
         }
         if ($_FILES['csv_file']) {
-            $_SESSION['SERIENBRIEF_CSV'] = array('header' => array(), 'content' => array());
+            $GLOBALS['SERIENBRIEF_CSV'] = array('header' => array(), 'content' => array());
             $content = CSVImportProcessor_serienbriefe::getCSVDataFromFile($_FILES["csv_file"]['tmp_name']);
             @unlink($_FILES["csv_file"]['tmp_name']);
-            $_SESSION['SERIENBRIEF_CSV']['header'] = array_shift($content);
+            $GLOBALS['SERIENBRIEF_CSV']['header'] = array_shift($content);
             foreach ($content as $line) {
                 $data = new stdClass();
-                foreach ($_SESSION['SERIENBRIEF_CSV']['header'] as $key => $header_name) {
+                foreach ($GLOBALS['SERIENBRIEF_CSV']['header'] as $key => $header_name) {
                     if (isset($line[$key])) {
                         $data->$header_name = $line[$key];
                     }
                 }
                 $data = (array) $this->getUserdata($data);
-                $_SESSION['SERIENBRIEF_CSV']['content'][] = $data;
+                $GLOBALS['SERIENBRIEF_CSV']['content'][] = $data;
             }
         }
         
@@ -117,6 +123,9 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
         $template->set_attribute('templates', serienbriefe_templates::findBySQL("1=1"));
         $template->set_attribute("msg", $msg);
         echo $template->render();
+        if ($GLOBALS['SERIENBRIEF_CSV']) {
+            $_SESSION['SERIENBRIEF_CSV'] = gzcompress(serialize($GLOBALS['SERIENBRIEF_CSV']));
+        }
     }
     
     public function parse_text_action() {

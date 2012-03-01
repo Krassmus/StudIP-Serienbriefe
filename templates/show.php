@@ -93,7 +93,7 @@
     echo MessageBox::$type($message);
 } ?>
 
-<? if (is_array($_SESSION['SERIENBRIEF_CSV']) && count($_SESSION['SERIENBRIEF_CSV']['header']) && !in_array("username", $_SESSION['SERIENBRIEF_CSV']['header']) && !in_array("email", $_SESSION['SERIENBRIEF_CSV']['header'])) : ?>
+<? if (is_array($GLOBALS['SERIENBRIEF_CSV']) && count($GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("username", $GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("email", $GLOBALS['SERIENBRIEF_CSV']['header'])) : ?>
     <?= MessageBox::error("Die hochgeladenen Empfägerdaten enthalten nicht das Feld <i>username</i> oder <i>email</i>.") ?>
 <? endif ?>
 
@@ -111,7 +111,7 @@
         <? foreach ($datafields as $datafield) : ?>
         <li><a onClick="STUDIP.serienbriefe.insertAtCursor(jQuery(this).text()); return false;">{{<?= htmlReady($datafield['name']) ?>}}</a></li>
         <? endforeach ?>
-        <? if (is_array($_SESSION['SERIENBRIEF_CSV']['header'])) foreach ($_SESSION['SERIENBRIEF_CSV']['header'] as $header_name) : ?>
+        <? if (is_array($GLOBALS['SERIENBRIEF_CSV']['header'])) foreach ($GLOBALS['SERIENBRIEF_CSV']['header'] as $header_name) : ?>
         <li><a onClick="STUDIP.serienbriefe.insertAtCursor(jQuery(this).text()); return false;">{{<?= htmlReady($header_name) ?>}}</a></li>
         <? endforeach ?>
     </ul>
@@ -154,7 +154,7 @@ if (Request::get("load_template")) {
         <a href="?reset=1"><?= makebutton("zuruecksetzen") ?></a>
 </div>
 
-<? if (is_array($_SESSION['SERIENBRIEF_CSV']['content']) && count($_SESSION['SERIENBRIEF_CSV']['content'])) : ?>
+<? if (is_array($GLOBALS['SERIENBRIEF_CSV']['content']) && count($GLOBALS['SERIENBRIEF_CSV']['content'])) : ?>
 <div>
     <h2><?= _("Teilnehmer und Teilnehmerdaten") ?></h2>
     <table id="datatable" class="active_table">
@@ -164,14 +164,14 @@ if (Request::get("load_template")) {
                 <? if (get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")) : ?>
                 <th></th>
                 <? endif ?>
-                <? foreach ($_SESSION['SERIENBRIEF_CSV']['header'] as $header_name) : ?>
+                <? foreach ($GLOBALS['SERIENBRIEF_CSV']['header'] as $header_name) : ?>
                 <th>{{<?= htmlReady($header_name) ?>}}</th>
                 <? endforeach ?>
             </tr>
         </thead>
         <tbody>
             <? $some_users_correct = false ?>
-            <? foreach ($_SESSION['SERIENBRIEF_CSV']['content'] as $line) : ?>
+            <? foreach ($GLOBALS['SERIENBRIEF_CSV']['content'] as $line) : ?>
             <? !$line['user_id'] || $some_users_correct = true ?>
             <tr 
                     id="user_<?= $line['user_id'] ?>" 
@@ -181,7 +181,7 @@ if (Request::get("load_template")) {
                 <? if (get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")) : ?>
                 <td><?= !$line[get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")] ? Assets::img("icons/16/red/decline.png", array('title' => _("Nutzer ist nicht einverstanden, seine Noten per Mail zu bekommen."), 'class' => "text-top")) : "" ?></td>
                 <? endif ?>
-                <? foreach ($_SESSION['SERIENBRIEF_CSV']['header'] as $header_name) : ?>
+                <? foreach ($GLOBALS['SERIENBRIEF_CSV']['header'] as $header_name) : ?>
                 <td data="<?= htmlReady($header_name) ?>"><?= htmlReady($line[$header_name]) ?></td>
                 <? endforeach ?>
                 <? $line_utf8 = array();
@@ -213,7 +213,7 @@ if (Request::get("load_template")) {
         <div style="text-align: center;">
             <label><?= _("Vorschau für ") ?>
                 <select id="preview_user" onChange="STUDIP.serienbriefe.preview(false);">
-                    <? foreach ($_SESSION['SERIENBRIEF_CSV']['content'] as $user_data) :
+                    <? foreach ($GLOBALS['SERIENBRIEF_CSV']['content'] as $user_data) :
                         if ($user_data['user_id']) : ?>
                     <option value="<?= htmlReady($user_data['user_id']) ?>"><?= htmlReady($user_data['name']) ?></option>
                         <? endif;
