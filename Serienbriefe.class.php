@@ -202,7 +202,7 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
         if ($data->user_id) {
             $df_entries = DataFieldEntry::getDataFieldEntries($data->user_id, "user");
             foreach ($this->datafields as $datafield) {
-                if (!$data->{$datafield['name']}) {
+                if (!$data->{$datafield['name']} && $df_entries[$datafield['datafield_id']]) {
                     $data->{$datafield['name']} = $df_entries[$datafield['datafield_id']]->getValue();
                 }
             }
