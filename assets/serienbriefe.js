@@ -26,25 +26,25 @@ STUDIP.serienbriefe = {
         var text = jQuery("#message").val();
         jQuery("#message_delivery").val(text);
         jQuery("#subject_delivery").val(jQuery("#subject").val());
-        
+
         var user_data = jQuery("#datatable > tbody > tr.correct");
         if (jQuery("#notenbekanntgabe").is(":checked")) {
             user_data = user_data.filter(".allowed");
         }
-        
+
         //relevante Nutzer in die Selectbox packen
         if (reload_select_box) {
             jQuery("#preview_user > option").remove();
             jQuery.each(user_data, function (index, user_line) {
                 user_line = jQuery(user_line);
-                if (jQuery("#notenbekanntgabe").length === 0 
+                if (jQuery("#notenbekanntgabe").length === 0
                         || !jQuery("#notenbekanntgabe").is(":checked") || user_line.is(".allowed")) {
                     user = jQuery.parseJSON(user_line.find("td.user_data").text());
                     jQuery("#preview_user").append(jQuery("<option/>").text(user.name).attr('value', user.user_id));
                 }
             });
         }
-        
+
         user_data = user_data.filter("#user_" + jQuery("#preview_user").val())
             .find("td.user_data")
             .text();
@@ -67,20 +67,23 @@ STUDIP.serienbriefe = {
                 'message': text
             },
             dataType: 'json',
+            type: "POST",
             success: function (output) {
                 subject = output.subject;
                 text = output.message;
                 jQuery("#preview_subject").html(subject);
                 jQuery("#preview_text").html(text);
                 STUDIP.serienbriefe.previewCheck();
-                
+
                 jQuery('#preview_window').dialog({
                     title: "Vorschau",
-                    modal: false,
-                    height: jQuery(window).height() * 0.9,
-                    width: "90%",
-                    show: "fade",
-                    hide: "fade"
+                    draggable: false,
+		               modal: true,
+		               width: Math.min(1000, jQuery(window).width() - 64),
+		               height: jQuery(window).height() * 0.9,
+		               maxHeight: jQuery(window).height(),
+		               show: '',
+		               hide: ''
                 });
             }
         });
@@ -146,7 +149,7 @@ STUDIP.serienbriefe = {
             }
         }
     },
-    
+
     showTemplates: function () {
         var choice = jQuery("#template_action").val();
         if (choice === "save") {
@@ -157,7 +160,7 @@ STUDIP.serienbriefe = {
             jQuery("#add_new_template").show();
             STUDIP.serienbriefe.adminTemplatesDialog();
             return;
-        } 
+        }
         if (choice === "admin") {
             jQuery("#add_new_template").hide();
             STUDIP.serienbriefe.adminTemplatesDialog();
@@ -171,11 +174,13 @@ STUDIP.serienbriefe = {
     adminTemplatesDialog: function () {
         jQuery('#templates_window').dialog({
             title: "Template-Verwaltung",
-            modal: false,
-            height: jQuery(window).height() * 0.9,
-            width: "90%",
-            show: "fade",
-            hide: "fade"
+            draggable: false,
+		               modal: true,
+		               width: Math.min(1000, jQuery(window).width() - 64),
+		               height: jQuery(window).height() * 0.9,
+		               maxHeight: jQuery(window).height(),
+		               show: '',
+		               hide: ''
         });
     },
     loadTemplate: function (template_id) {

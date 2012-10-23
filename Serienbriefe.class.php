@@ -2,7 +2,7 @@
 
 /*
  *  Copyright (c) 2012  Rasmus Fuhse <fuhse@data-quest.de>
- * 
+ *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU General Public License as
  *  published by the Free Software Foundation; either version 2 of
@@ -25,9 +25,9 @@ while (($file = readdir($handle)) !== false) {
  * @author Rasmus
  */
 class Serienbriefe extends StudIPPlugin implements SystemPlugin {
-    
+
     protected $datafields = array();
-    
+
     public function __construct() {
         parent::__construct();
         $tab = new Navigation(_("Serienbriefe"), PluginEngine::getURL($this, array(), "index"));
@@ -37,7 +37,7 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
         $tab = new AutoNavigation(_("Serienbriefe"), PluginEngine::getURL($this, array(), "index"));
         Navigation::addItem("/serienbriefe/show", $tab);
     }
-    
+
     public function index_action() {
         PageLayout::addHeadElement("script", array('src' => $this->getPluginURL()."/assets/serienbriefe.js"), "");
         if ($_SESSION['SERIENBRIEF_CSV']) {
@@ -56,6 +56,7 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
             $count = 0;
             $messaging = new messaging();
             $_SESSION['not_delivered_users'] = array();
+            $GLOBALS['MESSAGING_FORWARD_AS_EMAIL'] = !Request::int('do_not_send_as_email');
             if (is_array($GLOBALS['SERIENBRIEF_CSV']['content'])) foreach ($GLOBALS['SERIENBRIEF_CSV']['content'] as $user_data) {
                 if ($user_data['user_id'] && (!get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD") || !Request::int('notenbekanntgabe') || $user_data[get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")])) {
                     $text = Request::get("message_delivery");
@@ -64,7 +65,7 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
                         $subject = str_replace("{{".$key."}}", $value, $subject);
                         $text = str_replace("{{".$key."}}", $value, $text);
                     }
-                    $success = $messaging->insert_message(addslashes($text), get_username($user_data['user_id']), $GLOBALS['user']->id, '', '', '', '', $subject, true);
+                    $success = $messaging->insert_message(addslashes($text), get_username($user_data['user_id']), $GLOBALS['user']->id, '', '', '', '', addslashes($subject), 1);
                     if ($success) {
                         $count++;
                     } else {
@@ -100,11 +101,16 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
             $template->delete();
             $msg[] = array("success", _("Template wurde gelöscht."));
         }
-        if ($_FILES['csv_file']) {
+        if ($_FILES['csv_file']['tmp_name']) {
             $GLOBALS['SERIENBRIEF_CSV'] = array('header' => array(), 'content' => array());
             $content = CSVImportProcessor_serienbriefe::getCSVDataFromFile($_FILES["csv_file"]['tmp_name']);
             @unlink($_FILES["csv_file"]['tmp_name']);
             $GLOBALS['SERIENBRIEF_CSV']['header'] = array_shift($content);
+            foreach ($GLOBALS['SERIENBRIEF_CSV']['header'] as $key => $header_name) {
+                if (!$header_name) {
+                    unset($GLOBALS['SERIENBRIEF_CSV']['header'][$key]);
+                }
+            }
             foreach ($content as $line) {
                 $data = new stdClass();
                 foreach ($GLOBALS['SERIENBRIEF_CSV']['header'] as $key => $header_name) {
@@ -116,7 +122,7 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
                 $GLOBALS['SERIENBRIEF_CSV']['content'][] = $data;
             }
         }
-        
+
         $template = $this->getTemplate("show.php", "with_infobox");
         $template->set_attribute("plugin", $this);
         $template->set_attribute("datafields", $this->datafields);
@@ -127,14 +133,14 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
             $_SESSION['SERIENBRIEF_CSV'] = gzcompress(serialize($GLOBALS['SERIENBRIEF_CSV']));
         }
     }
-    
+
     public function parse_text_action() {
         $output = array();
         $output['subject'] = studip_utf8encode(formatReady(studip_utf8decode(Request::get("subject"))));
         $output['message'] = studip_utf8encode(formatReady(studip_utf8decode(Request::get("message"))));
         echo json_encode($output);
     }
-    
+
     public function users_not_delivered_csv_action() {
         $output = "";
         $header = array();
@@ -177,7 +183,7 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
         header("Content-Disposition: attachment; filename=serienbrief_bericht.csv");
         echo $output;
     }
-    
+
     protected function getUserdata($data) {
         $db = DBManager::get();
         if ($data->username) {
@@ -194,7 +200,7 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
         if ($data->user_id && !$data->name) {
             $data->name = get_fullname($data->user_id, "no_title");
             $data->anrede = ($user['geschlecht'] == 2 ? "Frau " : ($user['geschlecht'] == 1 ? "Herr " : "")). get_fullname($data->user_id, "full");
-            $data->sehrgeehrte = ($user['geschlecht'] == 2 ? "Sehr geehrte Frau " : ($user['geschlecht'] == 1 ? "Sehr geehrter Herr " : "Sehr geehrte(r) ")). get_fullname($data->user_id, "full");
+            $data->sehrgeehrte = ($user['geschlecht'] == 2 ? "Sehr geehrte Frau " : ($user['geschlecht'] == 1 ? "Sehr geehrter Herr " : "Sehr geehrte/r ")). get_fullname($data->user_id, "full");
         }
         if ($data->user_id && !$data->email) {
             $data->email = $user['Email'];
@@ -202,23 +208,23 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
         if ($data->user_id) {
             $df_entries = DataFieldEntry::getDataFieldEntries($data->user_id, "user");
             foreach ($this->datafields as $datafield) {
-                if (!$data->{$datafield['name']} && $df_entries[$datafield['datafield_id']]) {
-                    $data->{$datafield['name']} = $df_entries[$datafield['datafield_id']]->getValue();
+                if (!$data->{$datafield['name']}) {
+                    $data->{$datafield['name']} = isset($df_entries[$datafield['datafield_id']]) ? $df_entries[$datafield['datafield_id']]->getValue() : '';
                 }
             }
         }
-        
-        //Noch diese ganzen zusätzlichen Datenfelder wie studiengruppe oder studienort, 
+
+        //Noch diese ganzen zusätzlichen Datenfelder wie studiengruppe oder studienort,
         //die Standortspezifisch sein können.
         NotificationCenter::postNotification("serienbriefe_get_user_data", $data);
-        
+
         return $data;
     }
-    
+
     protected function getDisplayName() {
         return _("Serienbriefe");
     }
-    
+
     protected function getTemplate($template_file_name, $layout = "without_infobox") {
         if (!$this->template_factory) {
             $this->template_factory = new Flexi_TemplateFactory(dirname(__file__)."/templates");
@@ -236,7 +242,7 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
         }
         return $template;
     }
-    
+
 }
 
 
