@@ -17,8 +17,5 @@
 class serienbriefe_templates extends SimpleORMap {
     protected $db_table = "serienbriefe_templates";
     
-    public static function findBySQL($where) {
-        return parent::findBySQL(__class__, $where." ORDER BY title ASC");
-    }
 }
 
