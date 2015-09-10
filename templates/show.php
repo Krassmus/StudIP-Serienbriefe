@@ -99,7 +99,7 @@
 
 <form name="message" action="<?= URLHelper::getLink("?", array('reset' => 0)) ?>" method="post" enctype="multipart/form-data">
 
-<h2><?= _("Serienbrief erstellen") ?></h2>
+<h1><?= _("Serienbrief schreiben") ?></h1>
 <div style="float: right; width: 23%;" id="replacement_div" class="sb_box">
     <h4><?= _("Mögliche Ersetzungen") ?></h4>
     <ul style="list-style-type: none; padding: 0px;" id="replacements">
@@ -149,9 +149,9 @@ if (Request::get("load_template")) {
 
 <div style="margin: 20px; text-align: center; clear: both;">
         <input type="file" name="csv_file" class="text-bottom">
-        <?= makebutton("absenden", "input") ?>
+        <?= \Studip\Button::create(_("Absenden"), "absenden") ?>
         <input type="hidden" name="notenbekanntgabe" id="notenbekanntgabe_hidden" value="<?= $notenbekanntgabe ? 1 : 0 ?>">
-        <a href="?reset=1"><?= makebutton("zuruecksetzen") ?></a>
+        <?= \Studip\LinkButton::create(_("Zurücksetzen"), URLHelper::getURL("?", array('reset' => 1))) ?>
 </div>
 
 <? if (is_array($GLOBALS['SERIENBRIEF_CSV']['content']) && count($GLOBALS['SERIENBRIEF_CSV']['content'])) : ?>
@@ -199,7 +199,7 @@ if (Request::get("load_template")) {
 
 <? if ($some_users_correct) : ?>
 <div style="text-align: center;">
-    <a onClick="STUDIP.serienbriefe.preview(true)"><?= makebutton("vorschau") ?></a>
+    <?= \Studip\LinkButton::create(_("Vorschau"), "#", array('onClick' => "STUDIP.serienbriefe.preview(true); return false;")) ?>
 </div>
 <? endif ?>
 
@@ -230,8 +230,8 @@ if (Request::get("load_template")) {
             <input type="checkbox" id="do_not_send_as_email" name="do_not_send_as_email" value="1">
             <label for="do_not_send_as_email"><?=_("Nachricht NICHT per E-mail weiterleiten")?></label>
             <br><br>
-            <?= makebutton("abschicken", "input") ?>
-            <a href="" onClick="jQuery('#preview_window').dialog('close'); return false;"><?= makebutton("abbrechen", "img") ?></a>
+            <?= \Studip\Button::create(_("Abschicken"), "abschicken") ?>
+            <?= \Studip\Button::create(_("Abbrechen"), "#", array('onClick' => "jQuery('#preview_window').dialog('close'); return false;")) ?>
         </div>
     </form>
 </div>
@@ -270,7 +270,7 @@ if (Request::get("load_template")) {
                 <textarea name="message" style="width: 95%; height: 200px; font-size: 0.7em;"><?= Request::get("edit_template") ? htmlReady($edit_template['message']) : "" ?></textarea>
             </div>
             <div style="text-align: center;">
-                <?= makebutton("speichern", "input") ?>
+                <?= \Studip\Button::create(_("Speichern"), "speichern") ?>
             </div>
         </form>
     </div>
@@ -324,22 +324,18 @@ if (Request::get("edit_template")) : ?>
 </script>
 <? endif;
 
+Sidebar::Get()->setImage("sidebar/mail-sidebar.png");
+
+
+
+
+Helpbar::Get()->addPlainText(_("Markup"), _("Links im Textfeld können Sie den Brief eingeben. Wörter in {{geschweiften}} Klammern werden als spezielle Variablen betrachtet, die Stud.IP durch die gewünschte Information ersetzt."), "icons/16/white/info");
+Helpbar::Get()->addPlainText(_("CSV-Daten"), _("Laden Sie eine CSV-Datei hoch, in der mindestens das Feld \"username\" oder \"email\" vorkommt, damit Stud.IP die Briefe auch versenden kann."), "icons/16/white/info");
+
+
 $infobox = array(
     'picture' => $GLOBALS['ABSOLUTE_URI_STUDIP'].$plugin->getPluginPath()."/assets/letterbox_bw.jpg",
     'content' => array(
-        array(
-            'kategorie' => _("Information"),
-            'eintrag' => array(
-                array(
-                    'icon' => "icons/16/black/info.png",
-                    'text' => _("Links im Textfeld können Sie den Brief eingeben. Wörter in {{geschweiften}} Klammern werden als spezielle Variablen betrachtet, die Stud.IP durch die gewünschte Information ersetzt.")
-                ),
-                array(
-                    'icon' => "icons/16/black/info.png",
-                    'text' => _("Laden Sie eine CSV-Datei hoch, in der mindestens das Feld \"username\" oder \"email\" vorkommt, damit Stud.IP die Briefe auch versenden kann.")
-                )
-            )
-        ),
         array(
             'kategorie' => _("Aktionen"),
             'eintrag' => array()

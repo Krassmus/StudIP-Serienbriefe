@@ -1,6 +1,6 @@
 pluginclassname=Serienbriefe
 pluginname=Serienbriefe
 origin=data-quest
-version=1.3
+version=2.0
 dbscheme=install.sql
-studipMinVersion=2.4
+studipMinVersion=3.1
