@@ -48,33 +48,83 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
         }
         if (Request::get("reset")) {
             $GLOBALS['SERIENBRIEF_CSV'] = array('header' => array(), 'content' => array());
+            if (is_array($_SESSION['SERIENBRIEFE_ATTACHMENTS'])) {
+                foreach ($_SESSION['SERIENBRIEFE_ATTACHMENTS'] as $file_id) {
+                    StudipDocument::find($file_id)->delete();
+                }
+            }
+            unset($_SESSION['SERIENBRIEFE_ATTACHMENTS']);
         }
         $db = DBManager::get();
         $msg = array();
         $this->datafields = $db->query("SELECT * FROM datafields WHERE object_type = 'user' ")->fetchAll(PDO::FETCH_ASSOC);
-        if (Request::submitted("abschicken") && Request::get("message_delivery") && Request::get("subject_delivery")) {
-            $count = 0;
-            $messaging = new messaging();
-            $_SESSION['not_delivered_users'] = array();
-            $GLOBALS['MESSAGING_FORWARD_AS_EMAIL'] = !Request::int('do_not_send_as_email');
-            if (is_array($GLOBALS['SERIENBRIEF_CSV']['content'])) foreach ($GLOBALS['SERIENBRIEF_CSV']['content'] as $user_data) {
-                if ($user_data['user_id'] && (!get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD") || !Request::int('notenbekanntgabe') || $user_data[get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")])) {
-                    $text = Request::get("message_delivery");
-                    $subject = Request::get("subject_delivery");
-                    foreach ($user_data as $key => $value) {
-                        $subject = str_replace("{{".$key."}}", $value, $subject);
-                        $text = str_replace("{{".$key."}}", $value, $text);
+        if (count(Request::getArray("delete_attachment"))) {
+            foreach (Request::getArray("delete_attachment") as $file_id => $value) {
+                StudipDocument::find($file_id)->delete();
+                foreach ($_SESSION['SERIENBRIEFE_ATTACHMENTS'] as $index => $attachment_id) {
+                    if ($file_id == $attachment_id) {
+                        unset($_SESSION['SERIENBRIEFE_ATTACHMENTS'][$index]);
                     }
-                    $success = $messaging->insert_message(addslashes($text), get_username($user_data['user_id']), $GLOBALS['user']->id, '', '', '', '', addslashes($subject), 1);
-                    if ($success) {
-                        $count++;
-                    } else {
-                        $msg[] = array("error", sprintf("Nachricht konnte nicht an %s versendet werden.", $user_data['email']));
-                    }
-                } else {
-                    $_SESSION['not_delivered_users'][] = $user_data;
                 }
             }
+        }
+        if (Request::submitted("abschicken") && Request::get("message_delivery") && Request::get("subject_delivery")) {
+            $count = 0;
+            $_SESSION['not_delivered_users'] = array();
+            $GLOBALS['MESSAGING_FORWARD_AS_EMAIL'] = !Request::int('do_not_send_as_email');
+            if (is_array($GLOBALS['SERIENBRIEF_CSV']['content'])) {
+                foreach ($GLOBALS['SERIENBRIEF_CSV']['content'] as $user_data) {
+                    if ($user_data['user_id'] && (!get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD") || !Request::int('notenbekanntgabe') || $user_data[get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")])) {
+                        $text = Request::get("message_delivery");
+                        $subject = Request::get("subject_delivery");
+                        foreach ($user_data as $key => $value) {
+                            $subject = str_replace("{{".$key."}}", $value, $subject);
+                            $text = str_replace("{{".$key."}}", $value, $text);
+                        }
+                        $messaging = new messaging();
+                        if (count($_SESSION['SERIENBRIEFE_ATTACHMENTS'])) {
+                            $range_id = md5(uniqid());
+                            $messaging->provisonal_attachment_id = $range_id;
+                            foreach ($_SESSION['SERIENBRIEFE_ATTACHMENTS'] as $file_id) {
+                                $document = new StudipDocument($file_id);
+                                $new_document = clone $document;
+                                $new_document->setNew(true);
+                                $new_document->setId($document->getNewId());
+                                $new_document['range_id'] = $range_id;
+                                $new_document->store();
+                                file_put_contents(
+                                    get_upload_file_path($new_document->getId()),
+                                    file_get_contents(get_upload_file_path($file_id))
+                                );
+                            }
+                        }
+                        $success = $messaging->insert_message(
+                            addslashes($text),
+                            get_username($user_data['user_id']),
+                            $GLOBALS['user']->id,
+                            '',
+                            $range_id,
+                            '',
+                            '',
+                            addslashes($subject),
+                            1
+                        );
+                        if ($success) {
+                            $count++;
+                        } else {
+                            $msg[] = array("error", sprintf("Nachricht konnte nicht an %s versendet werden.", $user_data['email']));
+                        }
+                    } else {
+                        $_SESSION['not_delivered_users'][] = $user_data;
+                    }
+                }
+            }
+            if (is_array($_SESSION['SERIENBRIEFE_ATTACHMENTS'])) {
+                foreach ($_SESSION['SERIENBRIEFE_ATTACHMENTS'] as $file_id) {
+                    StudipDocument::find($file_id)->delete();
+                }
+            }
+            unset($_SESSION['SERIENBRIEFE_ATTACHMENTS']);
             if ($count > 0) {
                 $msg[] = array("success", sprintf("Nachricht wurde an %s Personen versendet.", $count));
             }
@@ -96,7 +146,7 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
             $new_template->store();
             $msg[] = array("success", _("Template wurde gespeichert."));
         }
-        if (Request::option("delete_template")) {
+        if (Request::submitted("delete_template")) {
             $template = new serienbriefe_templates(Request::get("delete_template"));
             $template->delete();
             $msg[] = array("success", _("Template wurde gelöscht."));
@@ -121,6 +171,36 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
                 $data = (array) $this->getUserdata($data);
                 $GLOBALS['SERIENBRIEF_CSV']['content'][] = $data;
             }
+        }
+        if ($_FILES['add_attachment']['tmp_name']) {
+            $file = $_FILES['add_attachment'];
+            $output = array(
+                'name' => $file['name'],
+                'size' => $file['size']
+            );
+            $output['message_id'] = Request::option("message_id");
+            if (!validate_upload($file)) {
+                list($type, $error) = explode("§", $GLOBALS['msg']);
+                Pagelayout;;postMessage(MessageBox::error($error));
+            }
+
+            $document = new StudipDocument();
+            $document->setValue('range_id' , 'provisional');
+            $document->setValue('seminar_id' , $GLOBALS['user']->id);
+            $document->setValue('name' , $output['name']);
+            $document->setValue('filename' , $document->getValue('name'));
+            $document->setValue('filesize' , (int) $output['size']);
+            $document->setValue('autor_host' , $_SERVER['REMOTE_ADDR']);
+            $document->setValue('user_id' , $GLOBALS['user']->id);
+            $document->setValue('description', "");
+            $success = $document->store();
+            $file_moved = move_uploaded_file($file['tmp_name'], get_upload_file_path($document->getId()));
+            if(!$file_moved) {
+                PageLayout::postMessage(MessageBox::error("No permission to move file to destination."));
+            }
+            $output['document_id'] = $document->getId();
+
+            $_SESSION['SERIENBRIEFE_ATTACHMENTS'][] = $document->getId();
         }
 
         $template = $this->getTemplate("show.php", "with_infobox");

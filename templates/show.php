@@ -84,6 +84,10 @@
 		color: rgba(0,0,0,0.4);
 	}
 
+    .attachments input[type=checkbox]:checked + span {
+        text-decoration: line-through;
+    }
+
 </style>
 
 
@@ -148,60 +152,89 @@ if (Request::get("load_template")) {
 <textarea style="width: 68%; height: 300px;" id="message" name="message" placeholder="<?= _("Nachrichtenkörper") ?>"><?= htmlReady($text) ?></textarea>
 
 <div style="margin: 20px; text-align: center; clear: both;">
-        <input type="file" name="csv_file" class="text-bottom">
-        <?= \Studip\Button::create(_("Absenden"), "absenden") ?>
-        <input type="hidden" name="notenbekanntgabe" id="notenbekanntgabe_hidden" value="<?= $notenbekanntgabe ? 1 : 0 ?>">
-        <?= \Studip\LinkButton::create(_("Zurücksetzen"), URLHelper::getURL("?", array('reset' => 1))) ?>
+    <label style="cursor: pointer;">
+        <input type="file" name="add_attachment" style="display: none;" onChange="jQuery(this).closest('form').submit();">
+        <?= Assets::img("icons/16/blue/upload") ?>
+        <?= _("Datei für alle anhängen") ?>
+    </label>
+    <? if (is_array($_SESSION['SERIENBRIEFE_ATTACHMENTS'])) : ?>
+    <ul class="clean attachments">
+        <? foreach ($_SESSION['SERIENBRIEFE_ATTACHMENTS'] as $file_id) : ?>
+            <li>
+                <? $document = new StudipDocument($file_id) ?>
+                <input type="checkbox" name="delete_attachment[<?= htmlReady($file_id) ?>]" value="1" id="delete_<?= htmlReady($file_id) ?>" style="display: none;">
+                <span>
+                    <?= Assets::img("icons/16/black/staple", array('class' => "text-bottom")) ?>
+                    <?= htmlReady($document['name']) ?>
+                </span>
+                <label for="delete_<?= htmlReady($file_id) ?>" style="cursor: pointer;">
+                    <?= Assets::img("icons/16/blue/trash", array('class' => "text-bottom")) ?>
+                </label>
+            </li>
+        <? endforeach ?>
+    </ul>
+    <? endif ?>
+</div>
+
+<div style="margin: 20px; text-align: center; clear: both;">
+    <label style="cursor: pointer; display: block;">
+        <input type="file" name="csv_file" style="display: none;" onChange="jQuery(this).closest('form').submit();">
+        <?= Assets::img("icons/20/blue/file-excel", array('class' => "text-bottom")) ?>
+        <?= _("CSV-Datei auswählen") ?>
+    </label>
+    <?= \Studip\Button::create(_("Absenden"), "absenden") ?>
+    <input type="hidden" name="notenbekanntgabe" id="notenbekanntgabe_hidden" value="<?= $notenbekanntgabe ? 1 : 0 ?>">
+    <?= \Studip\LinkButton::create(_("Zurücksetzen"), URLHelper::getURL("?", array('reset' => 1))) ?>
 </div>
 
 <? if (is_array($GLOBALS['SERIENBRIEF_CSV']['content']) && count($GLOBALS['SERIENBRIEF_CSV']['content'])) : ?>
-<div>
-    <h2><?= _("Teilnehmer und Teilnehmerdaten") ?></h2>
-    <table id="datatable" class="active_table">
-        <thead>
-            <tr>
-                <th></th>
-                <? if (get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")) : ?>
-                <th></th>
-                <? endif ?>
-                <? foreach ($GLOBALS['SERIENBRIEF_CSV']['header'] as $header_name) : ?>
-                <th>{{<?= htmlReady($header_name) ?>}}</th>
+    <div>
+        <h2><?= _("Teilnehmer und Teilnehmerdaten") ?></h2>
+        <table id="datatable" class="active_table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <? if (get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")) : ?>
+                    <th></th>
+                    <? endif ?>
+                    <? foreach ($GLOBALS['SERIENBRIEF_CSV']['header'] as $header_name) : ?>
+                    <th>{{<?= htmlReady($header_name) ?>}}</th>
+                    <? endforeach ?>
+                </tr>
+            </thead>
+            <tbody>
+                <? $some_users_correct = false ?>
+                <? foreach ($GLOBALS['SERIENBRIEF_CSV']['content'] as $line) : ?>
+                <? !$line['user_id'] || $some_users_correct = true ?>
+                <tr
+                        id="user_<?= $line['user_id'] ?>"
+                        class="<?= ($line['user_id'] ? " correct" : " unfinished").((!get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD") || $line[get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")]) ? " allowed" : " denied") ?>"
+                        >
+                    <td><?= !$line['user_id'] ? Assets::img("icons/16/red/decline.png", array('title' => _("Nutzer konnte nicht anhand von Username oder Email identifiziert werden."), 'class' => "text-top")) : "" ?></td>
+                    <? if (get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")) : ?>
+                    <td><?= !$line[get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")] ? Assets::img("icons/16/red/decline.png", array('title' => _("Nutzer ist nicht einverstanden, seine Noten per Mail zu bekommen."), 'class' => "text-top")) : "" ?></td>
+                    <? endif ?>
+                    <? foreach ($GLOBALS['SERIENBRIEF_CSV']['header'] as $header_name) : ?>
+                    <td data="<?= htmlReady($header_name) ?>"><?= htmlReady($line[$header_name]) ?></td>
+                    <? endforeach ?>
+                    <? $line_utf8 = array();
+                    foreach ($line as $key => $value) {
+                        unset($line_utf8[$key]);
+                        $line_utf8[studip_utf8encode($key)] = studip_utf8encode($value);
+                    }
+                    ?>
+                    <td style="display: none;" class="user_data"><?= htmlReady(json_encode($line_utf8)) ?></td>
+                </tr>
                 <? endforeach ?>
-            </tr>
-        </thead>
-        <tbody>
-            <? $some_users_correct = false ?>
-            <? foreach ($GLOBALS['SERIENBRIEF_CSV']['content'] as $line) : ?>
-            <? !$line['user_id'] || $some_users_correct = true ?>
-            <tr
-                    id="user_<?= $line['user_id'] ?>"
-                    class="<?= ($line['user_id'] ? " correct" : " unfinished").((!get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD") || $line[get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")]) ? " allowed" : " denied") ?>"
-                    >
-                <td><?= !$line['user_id'] ? Assets::img("icons/16/red/decline.png", array('title' => _("Nutzer konnte nicht anhand von Username oder Email identifiziert werden."), 'class' => "text-top")) : "" ?></td>
-                <? if (get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")) : ?>
-                <td><?= !$line[get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")] ? Assets::img("icons/16/red/decline.png", array('title' => _("Nutzer ist nicht einverstanden, seine Noten per Mail zu bekommen."), 'class' => "text-top")) : "" ?></td>
-                <? endif ?>
-                <? foreach ($GLOBALS['SERIENBRIEF_CSV']['header'] as $header_name) : ?>
-                <td data="<?= htmlReady($header_name) ?>"><?= htmlReady($line[$header_name]) ?></td>
-                <? endforeach ?>
-                <? $line_utf8 = array();
-                foreach ($line as $key => $value) {
-                    unset($line_utf8[$key]);
-                    $line_utf8[studip_utf8encode($key)] = studip_utf8encode($value);
-                }
-                ?>
-                <td style="display: none;" class="user_data"><?= htmlReady(json_encode($line_utf8)) ?></td>
-            </tr>
-            <? endforeach ?>
-        </tbody>
-    </table>
-</div>
+            </tbody>
+        </table>
+    </div>
 
-<? if ($some_users_correct) : ?>
-<div style="text-align: center;">
-    <?= \Studip\LinkButton::create(_("Vorschau"), "#", array('onClick' => "STUDIP.serienbriefe.preview(true); return false;")) ?>
-</div>
-<? endif ?>
+    <? if ($some_users_correct) : ?>
+    <div style="text-align: center;">
+        <?= \Studip\LinkButton::create(_("Vorschau"), "#", array('onClick' => "STUDIP.serienbriefe.preview(true); return false;")) ?>
+    </div>
+    <? endif ?>
 
 <? endif ?>
 
