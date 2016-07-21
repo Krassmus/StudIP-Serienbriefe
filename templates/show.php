@@ -394,7 +394,7 @@ if (get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")) {
     );
 }
 
-$templates_select = '<select id="template_action" onChange="STUDIP.serienbriefe.showTemplates();">';
+$templates_select = '<select id="template_action" onChange="STUDIP.serienbriefe.showTemplates();" style="max-width: 100%;">';
 $templates_select .= '<option value="">Template ...</option>';
 if ($templates) {
     foreach ($templates as $template) {

@@ -269,7 +269,7 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
         if ($data->username) {
             $data->user_id = get_userid($data->username);
         } elseif ($data->email) {
-            $data->user_id = $db->query("SELECT user_id FROM auth_user_md5 WHERE Email = ".$db->quote($data['email'])." ")->fetch(PDO::FETCH_COLUMN, 0);
+            $data->user_id = $db->query("SELECT user_id FROM auth_user_md5 WHERE Email = ".$db->quote($data->email)." ")->fetch(PDO::FETCH_COLUMN, 0);
         }
         $user = $db->query(
             "SELECT * " .
