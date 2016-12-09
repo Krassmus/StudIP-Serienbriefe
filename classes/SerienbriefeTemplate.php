@@ -14,7 +14,7 @@
  *
  * @author Rasmus
  */
-class serienbriefe_templates extends SimpleORMap {
+class SerienbriefeTemplate extends SimpleORMap {
     protected $db_table = "serienbriefe_templates";
     
 }

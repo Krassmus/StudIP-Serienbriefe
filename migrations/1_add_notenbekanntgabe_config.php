@@ -9,7 +9,7 @@
  *  the License, or (at your option) any later version.
  */
 
-class AddNotenbekanntgabeConfig extends DBMigration {
+class AddNotenbekanntgabeConfig extends Migration {
     public function up() {
         $db = DBManager::get();
         $db->exec(

@@ -3,4 +3,4 @@ pluginname=Serienbriefe
 origin=data-quest
 version=2.0.2
 dbscheme=install.sql
-studipMinVersion=3.1
+studipMinVersion=3.4
