@@ -19,30 +19,28 @@ while (($file = readdir($handle)) !== false) {
     }
 }
 
-/**
- * Description of Serienbriefe
- *
- * @author Rasmus
- */
 class Serienbriefe extends StudIPPlugin implements SystemPlugin {
 
     protected $datafields = array();
 
+    static public function setUsersForSerienbriefe($user_ids) {
+        $csv = array('header' => array("user_id"), 'content' => array());
+        foreach ($user_ids as $user_id) {
+            $csv['content'][] = array('user_id' => $user_id);
+        }
+        $_SESSION['SERIENBRIEF_CSV'] = gzcompress(serialize($csv));
+    }
+
     public function __construct() {
         parent::__construct();
-        $tab = new Navigation(_("Serienbriefe"), PluginEngine::getURL($this, array(), "write/overview"));
-        Navigation::addItem("/start/serienbriefe", $tab);
+        if (Navigation::hasItem("/start")) {
+            $tab = new Navigation(_("Serienbriefe"), PluginEngine::getURL($this, array(), "write/overview"));
+            Navigation::addItem("/start/serienbriefe", $tab);
+        }
         $tab = new Navigation(_("Serienbriefe"), PluginEngine::getURL($this, array(), "write/overview"));
         Navigation::addItem("/serienbriefe", $tab);
         $tab = new AutoNavigation(_("Serienbriefe"), PluginEngine::getURL($this, array(), "write/overview"));
         Navigation::addItem("/serienbriefe/overview", $tab);
-    }
-
-    public function parse_text_action() {
-        $output = array();
-        $output['subject'] = studip_utf8encode(formatReady(studip_utf8decode(Request::get("subject"))));
-        $output['message'] = studip_utf8encode(formatReady(studip_utf8decode(Request::get("message"))));
-        echo json_encode($output);
     }
 
     public function users_not_delivered_csv_action() {

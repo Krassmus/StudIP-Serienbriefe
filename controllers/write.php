@@ -10,6 +10,12 @@ class WriteController extends PluginController
         parent::before_filter($action, $args);
         PageLayout::addScript($this->plugin->getPluginURL() . "/assets/serienbriefe.js");
         Navigation::activateItem("/serienbriefe/overview");
+        if (Request::get("yeah")) {
+            Serienbriefe::setUsersForSerienbriefe(array(
+                "9186357bf3e729a8dd09ea1047450c61",
+                "60877f19a6ac564016aba5d8df0e3b18"
+            ));
+        }
     }
 
     public function overview_action() {
@@ -43,84 +49,7 @@ class WriteController extends PluginController
                 }
             }
         }
-        if (Request::submitted("abschicken") && Request::get("message_delivery") && Request::get("subject_delivery")) {
-            $count = 0;
-            $_SESSION['not_delivered_users'] = array();
-            $GLOBALS['MESSAGING_FORWARD_AS_EMAIL'] = !Request::int('do_not_send_as_email');
-            if (is_array($GLOBALS['SERIENBRIEF_CSV']['content'])) {
-                foreach ($GLOBALS['SERIENBRIEF_CSV']['content'] as $user_data) {
-                    if ($user_data['user_id'] && (!get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD") || !Request::int('notenbekanntgabe') || $user_data[get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")])) {
-                        $text = Request::get("message_delivery");
-                        $subject = Request::get("subject_delivery");
-                        foreach ($user_data as $key => $value) {
-                            $subject = str_replace("{{".$key."}}", $value, $subject);
-                            $text = str_replace("{{".$key."}}", $value, $text);
-                        }
-                        $messaging = new messaging();
-                        if (count($_SESSION['SERIENBRIEFE_ATTACHMENTS'])) {
-                            $range_id = md5(uniqid());
-                            $messaging->provisonal_attachment_id = $range_id;
-                            foreach ($_SESSION['SERIENBRIEFE_ATTACHMENTS'] as $file_id) {
-                                $document = new StudipDocument($file_id);
-                                $new_document = clone $document;
-                                $new_document->setNew(true);
-                                $new_document->setId($document->getNewId());
-                                $new_document['range_id'] = $range_id;
-                                $new_document->store();
-                                file_put_contents(
-                                    get_upload_file_path($new_document->getId()),
-                                    file_get_contents(get_upload_file_path($file_id))
-                                );
-                            }
-                        }
-                        $success = $messaging->insert_message(
-                            addslashes($text),
-                            get_username($user_data['user_id']),
-                            $GLOBALS['user']->id,
-                            '',
-                            $range_id,
-                            '',
-                            '',
-                            addslashes($subject),
-                            1
-                        );
-                        if ($success) {
-                            $count++;
-                        } else {
-                            PageLayout::postMessage(MessageBox::error(sprintf("Nachricht konnte nicht an %s versendet werden.", $user_data['email'])));
-                        }
-                    } else {
-                        $_SESSION['not_delivered_users'][] = $user_data;
-                    }
-                }
-            }
-            if (is_array($_SESSION['SERIENBRIEFE_ATTACHMENTS'])) {
-                foreach ($_SESSION['SERIENBRIEFE_ATTACHMENTS'] as $file_id) {
-                    StudipDocument::find($file_id)->delete();
-                }
-            }
-            unset($_SESSION['SERIENBRIEFE_ATTACHMENTS']);
-            if ($count > 0) {
-                PageLayout::postMessage(MessageBox::success(sprintf("Nachricht wurde an %s Personen versendet.", $count)));
-            }
-            if (count($_SESSION['not_delivered_users']) > 0) {
-                PageLayout::postMessage(MessageBox::info(sprintf("An %s Personen wurde die Nachricht nicht versendet. %sBericht dazu%s.", count($_SESSION['not_delivered_users']), '<a href="'.PluginEngine::getLink($this, array(), 'users_not_delivered_csv').'">', '</a>')));
-            }
-        }
-        if (Request::submitted("speichern") && count($_POST) && Request::get("template_id")) {
-            if (Request::get("template_id") && (Request::get("template_id") !== "new")) {
-                $new_template = new SerienbriefeTemplate(Request::get("template_id"));
-            } else {
-                $new_template = new SerienbriefeTemplate();
-            }
-            $new_template['message'] = Request::get("message");
-            $new_template['subject'] = Request::get("subject");
-            $new_template['title'] = Request::get("title");
-            $new_template['notenbekanntgabe'] = Request::int("notenbekanntgabe_template");
-            $new_template['user_id'] = $GLOBALS['user']->id;
-            $new_template->store();
-            PageLayout::postMessage(MessageBox::success(_("Template wurde gespeichert.")));
-        }
+
         if (Request::submitted("delete_template")) {
             $template = new SerienbriefeTemplate(Request::get("delete_template"));
             $template->delete();
@@ -178,6 +107,28 @@ class WriteController extends PluginController
             $_SESSION['SERIENBRIEFE_ATTACHMENTS'][] = $document->getId();
         }
 
+        if (Config::get()->SERIENBRIEFE_ATTRIBUTE_TABLE) {
+            $attribute_table = Config::get()->SERIENBRIEFE_ATTRIBUTE_TABLE;
+            if (strpos($attribute_table, ":") !== false) {
+                list($attribute_table, $this->user_id_column) = explode(":", $attribute_table);
+            } else {
+                $this->user_id_column = "user_id";
+            }
+            $statement = DBManager::get()->prepare("
+                SELECT COLUMN_NAME 
+                FROM information_schema.COLUMNS 
+                WHERE TABLE_NAME = :table AND 
+                    TABLE_SCHEMA = :db;
+            ");
+            $statement->execute(array(
+                'table' => $attribute_table,
+                'db' => $GLOBALS['DB_STUDIP_DATABASE']
+            ));
+            $this->attributetable_attributes = $statement->fetchAll(PDO::FETCH_COLUMN, 0);
+        } else {
+            $this->attributetable_attributes = array();
+        }
+
         $this->templates = SerienbriefeTemplate::findBySQL("1=1");
         if ($GLOBALS['SERIENBRIEF_CSV']) {
             $_SESSION['SERIENBRIEF_CSV'] = gzcompress(serialize($GLOBALS['SERIENBRIEF_CSV']));
@@ -185,6 +136,7 @@ class WriteController extends PluginController
     }
 
     protected function getUserdata($data) {
+        $data = (object) $data;
         $db = DBManager::get();
         if ($data->username) {
             $data->user_id = get_userid($data->username);
@@ -207,6 +159,7 @@ class WriteController extends PluginController
         }
         if ($data->user_id) {
             $df_entries = DataFieldEntry::getDataFieldEntries($data->user_id, "user");
+            $this->datafields = $db->query("SELECT * FROM datafields WHERE object_type = 'user' ")->fetchAll(PDO::FETCH_ASSOC);
             foreach ($this->datafields as $datafield) {
                 if (!$data->{$datafield['name']}) {
                     $data->{$datafield['name']} = isset($df_entries[$datafield['datafield_id']]) ? $df_entries[$datafield['datafield_id']]->getValue() : '';
@@ -218,6 +171,145 @@ class WriteController extends PluginController
         //die Standortspezifisch sein können.
         NotificationCenter::postNotification("serienbriefe_get_user_data", $data);
 
-        return $data;
+        if (Config::get()->SERIENBRIEFE_ATTRIBUTE_TABLE) {
+            $attribute_table = Config::get()->SERIENBRIEFE_ATTRIBUTE_TABLE;
+            if (strpos($attribute_table, ":") !== false) {
+                list($attribute_table, $user_id_column) = explode(":", $attribute_table);
+            } else {
+                $user_id_column = "user_id";
+            }
+            $statement = DBManager::get()->prepare("
+                SELECT *
+                FROM `".$attribute_table."`
+                WHERE `".$user_id_column."` = ?
+            ");
+            $statement->execute(array($data->user_id));
+            $attributes = $statement->fetch(PDO::FETCH_ASSOC);
+            if ($attributes) {
+                $data = array_merge((array)$data, $attributes);
+            }
+        }
+
+        return (array) $data;
+    }
+
+    public function preview_action()
+    {
+        PageLayout::setTitle(_("Serienbriefe: Vorschau"));
+        if ($_SESSION['SERIENBRIEF_CSV']) {
+            if (!is_string($_SESSION['SERIENBRIEF_CSV'])) {
+                $_SESSION['SERIENBRIEF_CSV'] = "";
+            }
+            $GLOBALS['SERIENBRIEF_CSV'] = unserialize(gzuncompress($_SESSION['SERIENBRIEF_CSV']));
+        }
+        $this->subject = Request::get("subject");
+        $this->message = Request::get("message");
+
+        if (Request::option("user_id")) {
+            $this->user_id = Request::option("user_id");
+        } else {
+            $this->user_id = $GLOBALS['SERIENBRIEF_CSV']['content'][0]['user_id'];
+        }
+        foreach ($GLOBALS['SERIENBRIEF_CSV']['content'] as $l) {
+            if ($l['user_id'] === $this->user_id) {
+                $line = $l;
+                break;
+            }
+        }
+
+        $data = new stdClass();
+        foreach ($GLOBALS['SERIENBRIEF_CSV']['header'] as $key => $header_name) {
+            if (isset($line[$header_name])) {
+                $data->$header_name = $line[$header_name];
+            }
+        }
+
+        $data = (array) $this->getUserdata($data);
+        $this->user_subject = $this->subject;
+        $this->user_message = $this->message;
+
+        foreach ($data as $field => $d) {
+            $this->user_subject = str_replace("{{".$field."}}", $d, $this->user_subject);
+            $this->user_message = str_replace("{{".$field."}}", $d, $this->user_message);
+        }
+
+    }
+
+    public function send_action()
+    {
+        if (Request::isPost() && Request::get("message") && Request::get("subject")) {
+            //send the message
+            $count = 0;
+            $_SESSION['not_delivered_users'] = array();
+            $GLOBALS['MESSAGING_FORWARD_AS_EMAIL'] = !Request::int('do_not_send_as_email');
+            if ($_SESSION['SERIENBRIEF_CSV']) {
+                if (!is_string($_SESSION['SERIENBRIEF_CSV'])) {
+                    $_SESSION['SERIENBRIEF_CSV'] = "";
+                }
+                $GLOBALS['SERIENBRIEF_CSV'] = unserialize(gzuncompress($_SESSION['SERIENBRIEF_CSV']));
+            }
+            if (is_array($GLOBALS['SERIENBRIEF_CSV']['content'])) {
+                $text = Request::get("message");
+                $subject = Request::get("subject");
+                foreach ($GLOBALS['SERIENBRIEF_CSV']['content'] as $user_data) {
+                    $user_data = $this->getUserdata($user_data);
+                    if ($user_data['user_id'] && (!Config::get()->SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD || !Request::int('notenbekanntgabe') || $user_data[Config::get()->SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD])) {
+                        foreach ($user_data as $key => $value) {
+                            $subject = str_replace("{{".$key."}}", $value, $subject);
+                            $text = str_replace("{{".$key."}}", $value, $text);
+                        }
+                        $messaging = new messaging();
+                        if (count($_SESSION['SERIENBRIEFE_ATTACHMENTS'])) {
+                            $range_id = md5(uniqid());
+                            $messaging->provisonal_attachment_id = $range_id;
+                            foreach ($_SESSION['SERIENBRIEFE_ATTACHMENTS'] as $file_id) {
+                                $document = new StudipDocument($file_id);
+                                $new_document = clone $document;
+                                $new_document->setNew(true);
+                                $new_document->setId($document->getNewId());
+                                $new_document['range_id'] = $range_id;
+                                $new_document->store();
+                                file_put_contents(
+                                    get_upload_file_path($new_document->getId()),
+                                    file_get_contents(get_upload_file_path($file_id))
+                                );
+                            }
+                        }
+                        $success = $messaging->insert_message(
+                            addslashes($text),
+                            get_username($user_data['user_id']),
+                            $GLOBALS['user']->id,
+                            '',
+                            $range_id,
+                            '',
+                            '',
+                            addslashes($subject),
+                            1
+                        );
+                        if ($success) {
+                            $count++;
+                        } else {
+                            PageLayout::postMessage(MessageBox::error(sprintf("Nachricht konnte nicht an %s versendet werden.", $user_data['email'])));
+                        }
+                    } else {
+                        $_SESSION['not_delivered_users'][] = $user_data;
+                    }
+                }
+            }
+            if (is_array($_SESSION['SERIENBRIEFE_ATTACHMENTS'])) {
+                foreach ($_SESSION['SERIENBRIEFE_ATTACHMENTS'] as $file_id) {
+                    StudipDocument::find($file_id)->delete();
+                }
+            }
+            unset($_SESSION['SERIENBRIEFE_ATTACHMENTS']);
+            if ($count > 0) {
+                PageLayout::postMessage(MessageBox::success(sprintf("Nachricht wurde an %s Personen versendet.", $count)));
+            }
+            if (count($_SESSION['not_delivered_users']) > 0) {
+                PageLayout::postMessage(MessageBox::info(sprintf("An %s Personen wurde die Nachricht nicht versendet. %sBericht dazu%s.", count($_SESSION['not_delivered_users']), '<a href="'.PluginEngine::getLink($this, array(), 'users_not_delivered_csv').'">', '</a>')));
+            }
+        }
+        $this->response->add_header("X-Location", PluginEngine::getURL($this->plugin, array(), "write/overview"));
+        $this->render_nothing();
     }
 }
