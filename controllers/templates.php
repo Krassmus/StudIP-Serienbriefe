@@ -7,6 +7,7 @@ class TemplatesController extends PluginController
 
     function before_filter(&$action, &$args)
     {
+        $this->utf8decode_xhr = true;
         parent::before_filter($action, $args);
         PageLayout::addScript($this->plugin->getPluginURL() . "/assets/serienbriefe.js");
         Navigation::activateItem("/serienbriefe/overview");
@@ -21,9 +22,16 @@ class TemplatesController extends PluginController
     {
         PageLayout::setTitle(_("Template bearbeiten"));
         $this->template = new SerienbriefeTemplate($template_id);
-        $this->template['title'] = Request::get("title");
-        $this->template['subject'] = Request::get("subject");
-        $this->template['message'] = Request::get("message");
+
+        if (Request::get("title")) {
+            $this->template['title'] = Request::get("title");
+        }
+        if (Request::get("subject")) {
+            $this->template['subject'] = Request::get("subject");
+        }
+        if (Request::get("message")) {
+            $this->template['message'] = Request::get("message");
+        }
         if (Request::isPost() && Request::submitted("speichern")) {
             $this->template->store();
             PageLayout::postMessage(MessageBox::success(_("Template wurde gespeichert")));
