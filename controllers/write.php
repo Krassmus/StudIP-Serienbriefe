@@ -7,6 +7,7 @@ class WriteController extends PluginController
 
     function before_filter(&$action, &$args)
     {
+        $this->utf8decode_xhr = true;
         parent::before_filter($action, $args);
         PageLayout::addScript($this->plugin->getPluginURL() . "/assets/serienbriefe.js");
         Navigation::activateItem("/serienbriefe/overview");
@@ -16,6 +17,7 @@ class WriteController extends PluginController
                 "60877f19a6ac564016aba5d8df0e3b18"
             ));
         }
+
     }
 
     public function overview_action() {
@@ -210,7 +212,7 @@ class WriteController extends PluginController
         } else {
             $this->user_id = $GLOBALS['SERIENBRIEF_CSV']['content'][0]['user_id'];
         }
-        foreach ($GLOBALS['SERIENBRIEF_CSV']['content'] as $l) {
+        foreach ((array) $GLOBALS['SERIENBRIEF_CSV']['content'] as $l) {
             if ($l['user_id'] === $this->user_id) {
                 $line = $l;
                 break;
@@ -218,7 +220,7 @@ class WriteController extends PluginController
         }
 
         $data = new stdClass();
-        foreach ($GLOBALS['SERIENBRIEF_CSV']['header'] as $key => $header_name) {
+        foreach ((array) $GLOBALS['SERIENBRIEF_CSV']['header'] as $key => $header_name) {
             if (isset($line[$header_name])) {
                 $data->$header_name = $line[$header_name];
             }
