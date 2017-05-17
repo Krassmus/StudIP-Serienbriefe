@@ -278,14 +278,14 @@ class WriteController extends PluginController
                             }
                         }
                         $success = $messaging->insert_message(
-                            addslashes($text),
+                            $text,
                             get_username($user_data['user_id']),
                             $GLOBALS['user']->id,
                             '',
                             $range_id,
                             '',
                             '',
-                            addslashes($subject),
+                            $subject,
                             1
                         );
                         if ($success) {
