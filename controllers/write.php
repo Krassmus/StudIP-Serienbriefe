@@ -251,11 +251,13 @@ class WriteController extends PluginController
                 $GLOBALS['SERIENBRIEF_CSV'] = unserialize(gzuncompress($_SESSION['SERIENBRIEF_CSV']));
             }
             if (is_array($GLOBALS['SERIENBRIEF_CSV']['content'])) {
-                $text = Request::get("message");
-                $subject = Request::get("subject");
+                $text_original = Request::get("message");
+                $subject_original = Request::get("subject");
                 foreach ($GLOBALS['SERIENBRIEF_CSV']['content'] as $user_data) {
                     $user_data = $this->getUserdata($user_data);
                     if ($user_data['user_id'] && (!Config::get()->SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD || !Request::int('notenbekanntgabe') || $user_data[Config::get()->SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD])) {
+                        $text = $text_original;
+                        $subject = $subject_original;
                         foreach ($user_data as $key => $value) {
                             $subject = str_replace("{{".$key."}}", $value, $subject);
                             $text = str_replace("{{".$key."}}", $value, $text);
@@ -277,6 +279,7 @@ class WriteController extends PluginController
                                 );
                             }
                         }
+
                         $success = $messaging->insert_message(
                             $text,
                             get_username($user_data['user_id']),
@@ -297,6 +300,7 @@ class WriteController extends PluginController
                         $_SESSION['not_delivered_users'][] = $user_data;
                     }
                 }
+                die();
             }
             if (is_array($_SESSION['SERIENBRIEFE_ATTACHMENTS'])) {
                 foreach ($_SESSION['SERIENBRIEFE_ATTACHMENTS'] as $file_id) {
