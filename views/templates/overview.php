@@ -15,9 +15,10 @@
         <tbody>
         <? foreach ($templates as $template) : ?>
             <tr>
+                <? $author = User::find($template['user_id']) ?>
                 <td><?= htmlReady($template['title']) ?></td>
                 <td><?= htmlReady($template['subject']) ?></td>
-                <td><?= htmlReady(get_fullname($template['user_id'])) ?></td>
+                <td><?= htmlReady($author ? $author->getFullName() : _("unbekannt")) ?></td>
                 <? if (get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")) : ?>
                     <td><?= $template['notenbekanntgabe'] ? Assets::img("icons/16/grey/accept.png", array('title' => _("Serienbrief ist Notenbekanntgabe"))) : Assets::img("icons/16/grey/decline.png", array('title' => _("Serienbrief ist keine Notenbekanntgabe"))) ?></td>
                 <? endif ?>

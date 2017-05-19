@@ -33,6 +33,7 @@ class TemplatesController extends PluginController
             $this->template['message'] = Request::get("message");
         }
         if (Request::isPost() && Request::submitted("speichern")) {
+            $this->template['user_id'] = $GLOBALS['user']->id;
             $this->template->store();
             PageLayout::postMessage(MessageBox::success(_("Template wurde gespeichert")));
         }
