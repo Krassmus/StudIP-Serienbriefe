@@ -8,7 +8,7 @@
                 <th><?= _("Notenbekanntgabe") ?></th>
             <? endif ?>
             <th><?= _("Autor") ?></th>
-            <th><?= _("Letzte Änderung") ?></th>
+            <th><?= _("Letzte Ã„nderung") ?></th>
             <th class="actions"></th>
         </tr>
         </thead>
@@ -25,13 +25,13 @@
                 <td><?= date("j.n.Y", $template['chdate']) ?></td>
                 <td class="actions">
                     <a title="<?= _("Template verwenden") ?>" onClick="STUDIP.serienbriefe.loadTemplate('<?= $template->getId() ?>');">
-                        <?= Assets::img("icons/20/blue/play") ?>
+                        <?= Icon::create("play", "clickable")->asImg(20) ?>
                     </a>
                     <a href="<?= PluginEngine::getLink($plugin, array(), "templates/edit/".$template->getId()) ?>" title="<?= _("Template bearbeiten") ?>" data-dialog>
-                        <?= Assets::img("icons/20/blue/edit") ?>
+                        <?= Icon::create("edit", "clickable")->asImg(20) ?>
                     </a>
-                    <a title="<?= _("Template löschen") ?>" onClick="STUDIP.serienbriefe.deleteTemplate('<?= $template->getId() ?>')">
-                        <?= Assets::img("icons/20/blue/trash") ?>
+                    <a title="<?= _("Template lÃ¶schen") ?>" onClick="STUDIP.serienbriefe.deleteTemplate('<?= $template->getId() ?>')">
+                        <?= Icon::create("trash", "clickable")->asImg(20) ?>
                     </a>
                 </td>
             </tr>

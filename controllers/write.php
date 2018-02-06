@@ -11,16 +11,10 @@ class WriteController extends PluginController
         parent::before_filter($action, $args);
         PageLayout::addScript($this->plugin->getPluginURL() . "/assets/serienbriefe.js");
         Navigation::activateItem("/serienbriefe/overview");
-        if (Request::get("yeah")) {
-            Serienbriefe::setUsersForSerienbriefe(array(
-                "9186357bf3e729a8dd09ea1047450c61",
-                "60877f19a6ac564016aba5d8df0e3b18"
-            ));
-        }
-
     }
 
-    public function overview_action() {
+    public function overview_action()
+    {
         if ($_SESSION['SERIENBRIEF_CSV']) {
             if (!is_string($_SESSION['SERIENBRIEF_CSV'])) {
                 $_SESSION['SERIENBRIEF_CSV'] = "";
@@ -55,7 +49,7 @@ class WriteController extends PluginController
         if (Request::submitted("delete_template")) {
             $template = new SerienbriefeTemplate(Request::get("delete_template"));
             $template->delete();
-            PageLayout::postMessage(MessageBox::success(_("Template wurde gelöscht.")));
+            PageLayout::postMessage(MessageBox::success(_("Template wurde gelÃ¶scht.")));
         }
         if ($_FILES['csv_file']['tmp_name']) {
             $GLOBALS['SERIENBRIEF_CSV'] = array('header' => array(), 'content' => array());
@@ -86,7 +80,7 @@ class WriteController extends PluginController
             );
             $output['message_id'] = Request::option("message_id");
             if (!validate_upload($file)) {
-                list($type, $error) = explode("§", $GLOBALS['msg']);
+                list($type, $error) = explode("Â§", $GLOBALS['msg']);
                 Pagelayout::postMessage(MessageBox::error($error));
             }
 
@@ -137,7 +131,8 @@ class WriteController extends PluginController
         }
     }
 
-    protected function getUserdata($data) {
+    protected function getUserdata($data)
+    {
         $data = (object) $data;
         $db = DBManager::get();
         if ($data->username) {
@@ -169,8 +164,8 @@ class WriteController extends PluginController
             }
         }
 
-        //Noch diese ganzen zusätzlichen Datenfelder wie studiengruppe oder studienort,
-        //die Standortspezifisch sein können.
+        //Noch diese ganzen zusÃ¤tzlichen Datenfelder wie studiengruppe oder studienort,
+        //die Standortspezifisch sein kÃ¶nnen.
         NotificationCenter::postNotification("serienbriefe_get_user_data", $data);
 
         if (Config::get()->SERIENBRIEFE_ATTRIBUTE_TABLE) {

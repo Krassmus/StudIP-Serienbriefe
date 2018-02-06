@@ -41,7 +41,7 @@ class serienbriefe_user_data_generator {
             case "O":
                 return "Oldenburg";
             case "H":
-                return "Hann.Münden";
+                return "Hann.MÃ¼nden";
             case "N":
                 return "Nienburg";
         }

@@ -36,18 +36,18 @@ class CSVImportProcessor_serienbriefe {
     }
 
     static public function reduce_diakritika_from_iso88591($text) {
-		$text = str_replace(array("‰","ƒ","ˆ","÷","¸","‹","ﬂ"), array('ae','Ae','oe','Oe','ue','Ue','ss'), $text);
-		$text = str_replace(array('¿','¡','¬','√','≈','∆'), 'A' , $text);
-		$text = str_replace(array('‡','·','‚','„','Â','Ê'), 'a' , $text);
-		$text = str_replace(array('»','…',' ','À'), 'E' , $text);
-		$text = str_replace(array('Ë','È','Í','Î'), 'e' , $text);
-		$text = str_replace(array('Ã','Õ','Œ','œ'), 'I' , $text);
-		$text = str_replace(array('Ï','Ì','Ó','Ô'), 'i' , $text);
-		$text = str_replace(array('“','”','’','‘','ÿ'), 'O' , $text);
-		$text = str_replace(array('Ú','Û','Ù','ı','¯'), 'o' , $text);
-		$text = str_replace(array('Ÿ','⁄','€'), 'U' , $text);
-		$text = str_replace(array('˘','˙','˚'), 'u' , $text);
-		$text = str_replace(array('«','Á','–','—','›','Ò','˝','ˇ'), array('C','c','D','N','Y','n','y','y') , $text);
+		$text = str_replace(array("√§","√Ñ","√∂","√ñ","√º","√ú","√ü"), array('ae','Ae','oe','Oe','ue','Ue','ss'), $text);
+		$text = str_replace(array('√Ä','√Å','√Ç','√É','√Ö','√Ü'), 'A' , $text);
+		$text = str_replace(array('√†','√°','√¢','√£','√•','√¶'), 'a' , $text);
+		$text = str_replace(array('√à','√â','√ä','√ã'), 'E' , $text);
+		$text = str_replace(array('√®','√©','√™','√´'), 'e' , $text);
+		$text = str_replace(array('√å','√ç','√é','√è'), 'I' , $text);
+		$text = str_replace(array('√¨','√≠','√Æ','√Ø'), 'i' , $text);
+		$text = str_replace(array('√í','√ì','√ï','√î','√ò'), 'O' , $text);
+		$text = str_replace(array('√≤','√≥','√¥','√µ','√∏'), 'o' , $text);
+		$text = str_replace(array('√ô','√ö','√õ'), 'U' , $text);
+		$text = str_replace(array('√π','√∫','√ª'), 'u' , $text);
+		$text = str_replace(array('√á','√ß','√ê','√ë','√ù','√±','√Ω','√ø'), array('C','c','D','N','Y','n','y','y') , $text);
 		return $text;
 	}
 

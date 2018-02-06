@@ -1,7 +1,7 @@
 <form action="<?= PluginEngine::getLink($plugin, array(), "write/preview") ?>" method="post" data-dialog>
     <ul id="fehler_protokoll"></ul>
     <div style="text-align: center;">
-        <label><?= _("Vorschau für ") ?>
+        <label><?= _("Vorschau fÃ¼r ") ?>
             <select name="user_id" onChange="jQuery(this).closest('form').submit();">
                 <? foreach ($GLOBALS['SERIENBRIEF_CSV']['content'] as $user_data) :
                     if ($user_data['user_id']) : ?>

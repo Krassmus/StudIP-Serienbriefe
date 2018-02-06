@@ -75,14 +75,14 @@
 
 
 <? if (is_array($GLOBALS['SERIENBRIEF_CSV']) && count($GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("username", $GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("email", $GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("user_id", $GLOBALS['SERIENBRIEF_CSV']['header'])) : ?>
-    <?= MessageBox::error("Die hochgeladenen Empfägerdaten enthalten nicht das Feld <i>username</i> oder <i>email</i>.") ?>
+    <?= MessageBox::error("Die hochgeladenen EmpfÃ¤gerdaten enthalten nicht das Feld <i>username</i> oder <i>email</i>.") ?>
 <? endif ?>
 
 <form name="message" action="<?= URLHelper::getLink("?", array('reset' => 0)) ?>" method="post" enctype="multipart/form-data">
 
     <h1><?= _("Serienbrief schreiben") ?></h1>
     <div style="float: right; width: 23%;" id="replacement_div" class="sb_box">
-        <h4><?= _("Mögliche Ersetzungen") ?></h4>
+        <h4><?= _("MÃ¶gliche Ersetzungen") ?></h4>
         <ul style="list-style-type: none; padding: 0px; max-height: 60vh; overflow: auto;" id="replacements">
             <li><a onClick="STUDIP.serienbriefe.insertAtCursor(jQuery(this).text()); return false;">{{name}}</a></li>
             <li><a onClick="STUDIP.serienbriefe.insertAtCursor(jQuery(this).text()); return false;">{{anrede}}</a></li>
@@ -135,13 +135,13 @@
     }
     ?>
     <input type="text" style="width: 68%;" name="subject" id="subject" value="<?= htmlReady($subject) ?>" placeholder="<?= _("Betreff") ?>">
-    <textarea style="width: 68%; height: 60vh;" id="message" name="message" placeholder="<?= _("Nachrichtenkörper") ?>"><?= htmlReady($text) ?></textarea>
+    <textarea style="width: 68%; height: 60vh;" id="message" name="message" placeholder="<?= _("NachrichtenkÃ¶rper") ?>"><?= htmlReady($text) ?></textarea>
 
     <div style="margin: 20px; text-align: center; clear: both;">
         <label style="cursor: pointer;">
             <input type="file" name="add_attachment" style="display: none;" onChange="jQuery(this).closest('form').submit();">
             <?= Icon::create("add", "clickable")->asImg(20, array('class' => "text-bottom")) ?>
-            <?= _("Datei für alle anhängen") ?>
+            <?= _("Datei fÃ¼r alle anhÃ¤ngen") ?>
         </label>
 
         <? if (is_array($_SESSION['SERIENBRIEFE_ATTACHMENTS'])) : ?>
@@ -171,7 +171,7 @@
 
         <div style="text-align: center;">
             <?= \Studip\LinkButton::create(_("Vorschau"), "#", array("onclick" => "jQuery('#preview_message').val(jQuery('#message').val()); jQuery('#preview_subject').val(jQuery('#subject').val()); jQuery('#preview_button').trigger('click'); return false;")) ?>
-            <?= \Studip\LinkButton::create(_("Zurücksetzen"), URLHelper::getURL("?", array('reset' => 1))) ?>
+            <?= \Studip\LinkButton::create(_("ZurÃ¼cksetzen"), URLHelper::getURL("?", array('reset' => 1))) ?>
         </div>
     </div>
 
@@ -259,7 +259,7 @@ if ($some_users_correct) {
     );
 }
 $actions->addLink(
-    _("CSV-Datei auswählen"),
+    _("CSV-Datei auswÃ¤hlen"),
     "#2",
     Icon::create("file-excel", "clickable"),
     array("onclick" => "jQuery('#csv_file').trigger('click'); return false;")
@@ -269,13 +269,13 @@ Sidebar::Get()->addWidget($actions);
 
 Helpbar::Get()->addPlainText(
     _("Markup"),
-    _("Links im Textfeld können Sie den Brief eingeben. Wörter in {{geschweiften}} Klammern werden als spezielle Variablen betrachtet, die Stud.IP durch die gewünschte Information ersetzt."),
-    "icons/16/white/info"
+    _("Links im Textfeld kÃ¶nnen Sie den Brief eingeben. WÃ¶rter in {{geschweiften}} Klammern werden als spezielle Variablen betrachtet, die Stud.IP durch die gewÃ¼nschte Information ersetzt."),
+    Icon::create("info", "info_alt")
 );
 Helpbar::Get()->addPlainText(
     _("CSV-Daten"),
     _("Laden Sie eine CSV-Datei hoch, in der mindestens das Feld \"username\" oder \"email\" vorkommt, damit Stud.IP die Briefe auch versenden kann."),
-    "icons/16/white/info"
+    Icon::create("info", "info_alt")
 );
 
 $templates_select = '<select id="template_action" onChange="STUDIP.serienbriefe.showTemplates();" style="max-width: 100%;">';
