@@ -148,7 +148,7 @@
             <ul class="clean attachments" style=" margin-top: 13px;">
                 <? foreach ($_SESSION['SERIENBRIEFE_ATTACHMENTS'] as $file_id) : ?>
                     <li>
-                        <? $document = new StudipDocument($file_id) ?>
+                        <? $document = new FileRef($file_id) ?>
                         <input type="checkbox" name="delete_attachment[<?= htmlReady($file_id) ?>]" value="1" id="delete_<?= htmlReady($file_id) ?>" style="display: none;">
                         <span>
                             <?= Icon::create("staple", "info")->asImg(20, array('class' => "text-bottom")) ?>
@@ -218,7 +218,7 @@
                         <? $line_utf8 = array();
                         foreach ($line as $key => $value) {
                             unset($line_utf8[$key]);
-                            $line_utf8[studip_utf8encode($key)] = studip_utf8encode($value);
+                            $line_utf8[$key] = $value;
                         }
                         ?>
                         <td style="display: none;" class="user_data"><?= htmlReady(json_encode($line_utf8)) ?></td>

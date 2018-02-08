@@ -11,6 +11,7 @@
 
 require_once dirname(__file__)."/classes/CSVImportProcessor.php";
 require_once dirname(__file__)."/classes/SerienbriefeTemplate.php";
+require_once dirname(__file__)."/classes/SerienbriefeFolder.php";
 
 $handle = opendir(dirname(__file__)."/plugins");
 while (($file = readdir($handle)) !== false) {
@@ -71,7 +72,7 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
                     } else {
                         $problem = "";
                         if (!$user_data['user_id']) {
-                            $problem = "Kein gültiger username oder Emailadresse.";
+                            $problem = "Kein gï¿½ltiger username oder Emailadresse.";
                         } elseif(get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD") && !$user_data[get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")]) {
                             $problem = "Nutzer ist nicht einverstanden mit dem Verschicken von Noten per Mail.";
                         }

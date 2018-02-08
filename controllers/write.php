@@ -79,28 +79,43 @@ class WriteController extends PluginController
                 'size' => $file['size']
             );
             $output['message_id'] = Request::option("message_id");
-            if (!validate_upload($file)) {
-                list($type, $error) = explode("§", $GLOBALS['msg']);
-                Pagelayout::postMessage(MessageBox::error($error));
+            $error = MessageFolder::validateUpload($file, $GLOBALS['user']->id);
+            if ($error != null) {
+                Pagelayout::postError($error);
             }
 
-            $document = new StudipDocument();
-            $document->setValue('range_id' , 'provisional');
-            $document->setValue('seminar_id' , $GLOBALS['user']->id);
-            $document->setValue('name' , $output['name']);
-            $document->setValue('filename' , $document->getValue('name'));
-            $document->setValue('filesize' , (int) $output['size']);
-            $document->setValue('autor_host' , $_SERVER['REMOTE_ADDR']);
-            $document->setValue('user_id' , $GLOBALS['user']->id);
-            $document->setValue('description', "");
-            $success = $document->store();
-            $file_moved = move_uploaded_file($file['tmp_name'], get_upload_file_path($document->getId()));
-            if(!$file_moved) {
-                PageLayout::postMessage(MessageBox::error("No permission to move file to destination."));
-            }
-            $output['document_id'] = $document->getId();
+            $serienbriefefolder = Folder::findOneBySQL("user_id = ? AND folder_type = 'SerienbriefeFolder'", array($GLOBALS['user']->id));
 
-            $_SESSION['SERIENBRIEFE_ATTACHMENTS'][] = $document->getId();
+            if (!$serienbriefefolder) {
+                $top_folder = Folder::findTopFolder($GLOBALS['user']->id, 'user');
+                $top_folder = $top_folder->getTypedFolder();
+
+                $serienbriefefolder = new Folder();
+                $serienbriefefolder->name = _("Serienbriefe");
+                $serienbriefefolder->user_id = $GLOBALS['user']->id;
+                $serienbriefefolder->parent_id = $top_folder->getId();
+                $serienbriefefolder->range_id = $GLOBALS['user']->id;
+                $serienbriefefolder->range_type  = $top_folder->range_type;
+                $serienbriefefolder->folder_type = "SerienbriefeFolder";
+                $serienbriefefolder->store();
+            }
+
+            $serienbriefefolder = $serienbriefefolder->getTypedFolder();
+
+            $file_ref = $serienbriefefolder->createFile($file);
+
+            if (!$file_ref instanceof FileRef) {
+                $error_message = _('Die hochgeladene Datei kann nicht verarbeitet werden!');
+
+                if ($file_ref instanceof MessageBox) {
+                    $error_message .= ' ' . $file_ref->message;
+                }
+                PageLayout::postError($error_message);
+            }
+
+            $output['document_id'] = $file_ref->id;
+
+            $_SESSION['SERIENBRIEFE_ATTACHMENTS'][] = $file_ref->id;
         }
 
         if (Config::get()->SERIENBRIEFE_ATTRIBUTE_TABLE) {
@@ -261,17 +276,16 @@ class WriteController extends PluginController
                         if (count($_SESSION['SERIENBRIEFE_ATTACHMENTS'])) {
                             $range_id = md5(uniqid());
                             $messaging->provisonal_attachment_id = $range_id;
+                            $message_top_folder = MessageFolder::findTopFolder($range_id) ?: MessageFolder::createTopFolder($range_id);
+
                             foreach ($_SESSION['SERIENBRIEFE_ATTACHMENTS'] as $file_id) {
-                                $document = new StudipDocument($file_id);
-                                $new_document = clone $document;
-                                $new_document->setNew(true);
-                                $new_document->setId($document->getNewId());
-                                $new_document['range_id'] = $range_id;
-                                $new_document->store();
-                                file_put_contents(
-                                    get_upload_file_path($new_document->getId()),
-                                    file_get_contents(get_upload_file_path($file_id))
+                                $document = new FileRef($file_id);
+                                $new_file_ref = FileManager::copyFileRef(
+                                    $document,
+                                    $message_top_folder,
+                                    User::findCurrent()
                                 );
+                                //var_dump($message_top_folder); die();
                             }
                         }
 
@@ -295,11 +309,10 @@ class WriteController extends PluginController
                         $_SESSION['not_delivered_users'][] = $user_data;
                     }
                 }
-                die();
             }
             if (is_array($_SESSION['SERIENBRIEFE_ATTACHMENTS'])) {
                 foreach ($_SESSION['SERIENBRIEFE_ATTACHMENTS'] as $file_id) {
-                    StudipDocument::find($file_id)->delete();
+                    FileRef::find($file_id)->delete();
                 }
             }
             unset($_SESSION['SERIENBRIEFE_ATTACHMENTS']);
