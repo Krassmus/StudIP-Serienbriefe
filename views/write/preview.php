@@ -20,7 +20,6 @@
     <div id="submit_button">
 
         <input type="hidden" name="subject" id="subject_delivery" value="<?= htmlReady($subject) ?>">
-        <input type="hidden" name="notenbekanntgabe" id="notenbekanntgabe_delivery" value="<?= $notenbekanntgabe ? 1 : 0 ?>">
         <textarea style="display: none" name="message" id="message_delivery"><?= htmlReady($message) ?></textarea>
 
         <label>

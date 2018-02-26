@@ -7,4 +7,4 @@ CREATE TABLE IF NOT EXISTS `serienbriefe_templates` (
   `chdate` bigint(20) NOT NULL,
   `mkdate` bigint(20) NOT NULL,
   PRIMARY KEY (`serienbrief_id`)
-) ENGINE=MyISAM;
+);

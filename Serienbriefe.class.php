@@ -29,7 +29,30 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
         foreach ($user_ids as $user_id) {
             $csv['content'][] = array('user_id' => $user_id);
         }
-        $_SESSION['SERIENBRIEF_CSV'] = gzcompress(serialize($csv));
+        self::setSerienbriefeData($csv);
+    }
+
+    static public function setSerienbriefeData($data)
+    {
+        $GLOBALS['SERIENBRIEF_CSV'] = $data;
+        $_SESSION['SERIENBRIEF_CSV'] = gzcompress(json_encode(($GLOBALS['SERIENBRIEF_CSV'])));
+    }
+
+    static public function getSerienbriefeData()
+    {
+        if (!$GLOBALS['SERIENBRIEF_CSV']) {
+            if (!$_SESSION['SERIENBRIEF_CSV']) {
+                return array();
+            }
+            $GLOBALS['SERIENBRIEF_CSV'] = json_decode(gzuncompress($_SESSION['SERIENBRIEF_CSV']), true);
+        }
+        return $GLOBALS['SERIENBRIEF_CSV'];
+    }
+
+    static public function resetSerienbriefeData()
+    {
+        unset($GLOBALS['SERIENBRIEF_CSV']);
+        unset($_SESSION['SERIENBRIEF_CSV']);
     }
 
     public function __construct() {
@@ -72,9 +95,7 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
                     } else {
                         $problem = "";
                         if (!$user_data['user_id']) {
-                            $problem = "Kein g�ltiger username oder Emailadresse.";
-                        } elseif(get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD") && !$user_data[get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")]) {
-                            $problem = "Nutzer ist nicht einverstanden mit dem Verschicken von Noten per Mail.";
+                            $problem = "Kein gültiger username oder Emailadresse.";
                         }
                         $output .= '"'.$problem.'"';
                     }

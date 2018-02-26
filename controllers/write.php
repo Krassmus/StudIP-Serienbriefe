@@ -15,17 +15,12 @@ class WriteController extends PluginController
 
     public function overview_action()
     {
-        if ($_SESSION['SERIENBRIEF_CSV']) {
-            if (!is_string($_SESSION['SERIENBRIEF_CSV'])) {
-                $_SESSION['SERIENBRIEF_CSV'] = "";
-            }
-            $GLOBALS['SERIENBRIEF_CSV'] = unserialize(gzuncompress($_SESSION['SERIENBRIEF_CSV']));
-        }
+        $GLOBALS['SERIENBRIEF_CSV'] = Serienbriefe::getSerienbriefeData();
         if (Request::get("reset")) {
-            $GLOBALS['SERIENBRIEF_CSV'] = array('header' => array(), 'content' => array());
+            Serienbriefe::resetSerienbriefeData();
             if (is_array($_SESSION['SERIENBRIEFE_ATTACHMENTS'])) {
                 foreach ($_SESSION['SERIENBRIEFE_ATTACHMENTS'] as $file_id) {
-                    StudipDocument::find($file_id)->delete();
+                    FileRef::find($file_id)->delete();
                 }
             }
             unset($_SESSION['SERIENBRIEFE_ATTACHMENTS']);
@@ -34,7 +29,7 @@ class WriteController extends PluginController
         $this->datafields = $db->query("SELECT * FROM datafields WHERE object_type = 'user' ")->fetchAll(PDO::FETCH_ASSOC);
         if (count(Request::getArray("delete_attachment"))) {
             foreach (Request::getArray("delete_attachment") as $file_id => $value) {
-                $attachment = StudipDocument::find($file_id);
+                $attachment = FileRef::find($file_id);
                 if ($attachment) {
                     $attachment->delete();
                 }
@@ -142,7 +137,7 @@ class WriteController extends PluginController
 
         $this->templates = SerienbriefeTemplate::findBySQL("1=1");
         if ($GLOBALS['SERIENBRIEF_CSV']) {
-            $_SESSION['SERIENBRIEF_CSV'] = gzcompress(serialize($GLOBALS['SERIENBRIEF_CSV']));
+            Serienbriefe::setSerienbriefeData($GLOBALS['SERIENBRIEF_CSV']);
         }
     }
 
@@ -208,12 +203,8 @@ class WriteController extends PluginController
     public function preview_action()
     {
         PageLayout::setTitle(_("Serienbriefe: Vorschau"));
-        if ($_SESSION['SERIENBRIEF_CSV']) {
-            if (!is_string($_SESSION['SERIENBRIEF_CSV'])) {
-                $_SESSION['SERIENBRIEF_CSV'] = "";
-            }
-            $GLOBALS['SERIENBRIEF_CSV'] = unserialize(gzuncompress($_SESSION['SERIENBRIEF_CSV']));
-        }
+
+        $GLOBALS['SERIENBRIEF_CSV'] = Serienbriefe::getSerienbriefeData();
         $this->subject = Request::get("subject");
         $this->message = Request::get("message");
 
@@ -254,18 +245,13 @@ class WriteController extends PluginController
             $count = 0;
             $_SESSION['not_delivered_users'] = array();
             $GLOBALS['MESSAGING_FORWARD_AS_EMAIL'] = !Request::int('do_not_send_as_email');
-            if ($_SESSION['SERIENBRIEF_CSV']) {
-                if (!is_string($_SESSION['SERIENBRIEF_CSV'])) {
-                    $_SESSION['SERIENBRIEF_CSV'] = "";
-                }
-                $GLOBALS['SERIENBRIEF_CSV'] = unserialize(gzuncompress($_SESSION['SERIENBRIEF_CSV']));
-            }
+            $GLOBALS['SERIENBRIEF_CSV'] = Serienbriefe::getSerienbriefeData();
             if (is_array($GLOBALS['SERIENBRIEF_CSV']['content'])) {
                 $text_original = Request::get("message");
                 $subject_original = Request::get("subject");
                 foreach ($GLOBALS['SERIENBRIEF_CSV']['content'] as $user_data) {
                     $user_data = $this->getUserdata($user_data);
-                    if ($user_data['user_id'] && (!Config::get()->SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD || !Request::int('notenbekanntgabe') || $user_data[Config::get()->SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD])) {
+                    if ($user_data['user_id']) {
                         $text = $text_original;
                         $subject = $subject_original;
                         foreach ($user_data as $key => $value) {
@@ -285,7 +271,6 @@ class WriteController extends PluginController
                                     $message_top_folder,
                                     User::findCurrent()
                                 );
-                                //var_dump($message_top_folder); die();
                             }
                         }
 
@@ -313,6 +298,12 @@ class WriteController extends PluginController
             if (is_array($_SESSION['SERIENBRIEFE_ATTACHMENTS'])) {
                 foreach ($_SESSION['SERIENBRIEFE_ATTACHMENTS'] as $file_id) {
                     FileRef::find($file_id)->delete();
+                }
+                //remove folder if it is empty:
+                $serienbriefefolder = Folder::findOneBySQL("user_id = ? AND folder_type = 'SerienbriefeFolder'", array($GLOBALS['user']->id));
+                $serienbriefefolder = $serienbriefefolder->getTypedFolder();
+                if (!count($serienbriefefolder->getFiles())) {
+                    $serienbriefefolder->delete();
                 }
             }
             unset($_SESSION['SERIENBRIEFE_ATTACHMENTS']);

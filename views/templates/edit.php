@@ -2,7 +2,6 @@
       method="post"
       class="default"
       data-dialog>
-    <? $is_note = get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD") ?>
 
     <label>
         <?= _("Name des Templates") ?>
@@ -13,14 +12,6 @@
         <?= _("Betreff") ?>
         <br><input type="text" name="subject" value="<?= htmlReady($template['subject']) ?>">
     </label>
-    <? if ($is_note) : ?>
-        <label>
-            <input type="checkbox" name="notenbekanntgabe_template" value="1"<?= $template['notenbekanntgabe'] ? " checked" : "" ?>>
-            <?= _("Notenbekanntgabe") ?>
-        </label>
-    <? else : ?>
-        <input type="hidden" name="notenbekanntgabe_template" value="<?= $template['notenbekanntgabe'] ? "1" : "0" ?>">
-    <? endif ?>
 
     <label>
         <?= _("Nachricht") ?>

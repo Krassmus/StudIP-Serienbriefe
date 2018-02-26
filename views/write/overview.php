@@ -74,7 +74,7 @@
     </style>
 
 
-<? if (is_array($GLOBALS['SERIENBRIEF_CSV']) && count($GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("username", $GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("email", $GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("user_id", $GLOBALS['SERIENBRIEF_CSV']['header'])) : ?>
+<? if (is_array(Serienbriefe::getSerienbriefeData()) && count($GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("username", $GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("email", $GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("user_id", $GLOBALS['SERIENBRIEF_CSV']['header'])) : ?>
     <?= MessageBox::error("Die hochgeladenen Empfägerdaten enthalten nicht das Feld <i>username</i> oder <i>email</i>.") ?>
 <? endif ?>
 
@@ -110,19 +110,11 @@
     <?
     $text = "";
     $subject = "";
-    if (Request::submitted("notenbekanntgabe")) {
-        $notenbekanntgabe = Request::int("notenbekanntgabe");
-    } elseif(Request::submitted("notenbekanntgabe_template")) {
-        $notenbekanntgabe = Request::int("notenbekanntgabe_template");
-    } else {
-        $notenbekanntgabe = true;
-    }
     if (Request::get("load_template")) {
         foreach ($templates as $template) {
             if (Request::get("load_template") === $template->getId()) {
                 $text = $template['message'];
                 $subject = $template['subject'];
-                $notenbekanntgabe = $template['notenbekanntgabe'];
             }
         }
     } else {
@@ -167,7 +159,6 @@
         <label style="cursor: pointer; display: block;">
             <input type="file" name="csv_file" style="display: none;" onChange="jQuery(this).closest('form').submit();" id="csv_file">
         </label>
-        <input type="hidden" name="notenbekanntgabe" id="notenbekanntgabe_hidden" value="<?= $notenbekanntgabe ? 1 : 0 ?>">
 
         <div style="text-align: center;">
             <?= \Studip\LinkButton::create(_("Vorschau"), "#", array("onclick" => "jQuery('#preview_message').val(jQuery('#message').val()); jQuery('#preview_subject').val(jQuery('#subject').val()); jQuery('#preview_button').trigger('click'); return false;")) ?>
@@ -182,9 +173,6 @@
                 <thead>
                 <tr>
                     <th width="20px"></th>
-                    <? if (get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")) : ?>
-                        <th></th>
-                    <? endif ?>
                     <? foreach ($GLOBALS['SERIENBRIEF_CSV']['header'] as $header_name) : ?>
                         <th>{{<?= htmlReady($header_name) ?>}}</th>
                     <? endforeach ?>
@@ -196,20 +184,13 @@
                     <? !$line['user_id'] || $some_users_correct = true ?>
                     <tr
                         id="user_<?= $line['user_id'] ?>"
-                        class="<?= ($line['user_id'] ? " correct" : " unfinished").((!get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD") || $line[get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")]) ? " allowed" : " denied") ?>"
+                        class="<?= ($line['user_id'] ? " correct" : " unfinished") ?>"
                     >
                         <td>
                             <?= !$line['user_id']
-                                ? Assets::img("icons/16/red/decline.png", array('title' => _("Nutzer konnte nicht anhand von Username oder Email identifiziert werden."), 'class' => "text-top"))
+                                ? Icon::create("decline","status-red")->asImg(20, array('title' => _("Nutzer konnte nicht anhand von Username oder Email identifiziert werden."), 'class' => "text-top"))
                                 : "" ?>
                         </td>
-                        <? if (get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")) : ?>
-                            <td>
-                                <?= !$line[Config::get()->SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD]
-                                        ? Assets::img("icons/16/red/decline.png", array('title' => _("Nutzer ist nicht einverstanden, seine Noten per Mail zu bekommen."), 'class' => "text-top"))
-                                        : "" ?>
-                            </td>
-                        <? endif ?>
                         <? foreach ($GLOBALS['SERIENBRIEF_CSV']['header'] as $header_name) : ?>
                             <td data="<?= htmlReady($header_name) ?>">
                                 <?= htmlReady($line[$header_name]) ?>
@@ -294,20 +275,6 @@ $widget = new SidebarWidget();
 $widget->setTitle(_("Templates"));
 $widget->addElement(new WidgetElement($templates_select));
 Sidebar::Get()->addWidget($widget);
-
-/*
-if (get_config("SERIENBRIEFE_NOTENBEKANNTGABE_DATENFELD")) {
-    $infobox['content'][1]['eintrag'][] = array(
-        'icon' => "icons/16/black/doctoral_cap.png",
-        'text' =>
-            '<label title="'._("Notenbekanntgaben werden nur an Nutzer verschickt, die diesem Verbreitungsweg zugestimmt haben.").'">'
-            ._("Serienbrief ist Notenbekanntgabe")
-            .'<input type="checkbox" value="1" id="notenbekanntgabe" name="notenbekanntgabe" class="text-bottom"'.($notenbekanntgabe ? " checked" : "").' onCHange="jQuery('."'#notenbekanntgabe_hidden, #notenbekanntgabe_delivery'".').val(this.checked ? 1 : 0);">'
-            .'</label>'
-    );
-}
-
-*/
 
 if (count($infobox['content'][1]['eintrag']) === 0) {
     unset($infobox['content'][1]);
