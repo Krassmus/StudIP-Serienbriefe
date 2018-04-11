@@ -35,7 +35,7 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
     static public function setSerienbriefeData($data)
     {
         $GLOBALS['SERIENBRIEF_CSV'] = $data;
-        $_SESSION['SERIENBRIEF_CSV'] = gzcompress(json_encode(($GLOBALS['SERIENBRIEF_CSV'])));
+        $_SESSION['SERIENBRIEF_CSV'] = gzcompress(json_encode($GLOBALS['SERIENBRIEF_CSV']));
     }
 
     static public function getSerienbriefeData()

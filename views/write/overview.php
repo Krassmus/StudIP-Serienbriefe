@@ -213,7 +213,9 @@
 
 </form>
 
-<form action="<?= PluginEngine::getLink($plugin, array(), "write/preview") ?>" data-dialog style="display: none;">
+<form action="<?= PluginEngine::getLink($plugin, array(), "write/preview") ?>"
+      data-dialog
+      style="display: none;" method="post">
     <input type="text" id="preview_subject" name="subject">
     <textarea id="preview_message" name="message"></textarea>
     <button id="preview_button"></button>

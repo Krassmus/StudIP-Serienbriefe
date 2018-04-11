@@ -32,7 +32,11 @@ class CSVImportProcessor_serienbriefe {
 	}
 
     static public function getCSVDataFromFile($file_path) {
-        return self::CSV2Array(file_get_contents($file_path));
+        $data = file_get_contents($file_path);
+        if ($data && !json_encode(array('data' => $data))) {
+            $data = iconv("Windows-1252", "UTF-8", $data);
+        }
+        return self::CSV2Array($data);
     }
 
     static public function reduce_diakritika_from_iso88591($text) {
