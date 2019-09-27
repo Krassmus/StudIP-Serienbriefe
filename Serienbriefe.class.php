@@ -63,6 +63,9 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
         }*/
         $tab = new Navigation(_("Serienbriefe"), PluginEngine::getURL($this, array(), "write/overview"));
         Navigation::addItem("/messaging/serienbriefe", $tab);
+
+        $tab = new Navigation(_("Serienbriefe"), PluginEngine::getURL($this, array(), "write/overview"));
+        Navigation::addItem("/start/serienbriefe", $tab);
     }
 
     public function users_not_delivered_csv_action() {
