@@ -10,7 +10,7 @@ class WriteController extends PluginController
         $this->utf8decode_xhr = true;
         parent::before_filter($action, $args);
         PageLayout::addScript($this->plugin->getPluginURL() . "/assets/serienbriefe.js");
-        Navigation::activateItem("/serienbriefe/overview");
+        Navigation::activateItem("/messaging/serienbriefe");
     }
 
     public function overview_action()
@@ -77,6 +77,13 @@ class WriteController extends PluginController
             $error = MessageFolder::validateUpload($file, $GLOBALS['user']->id);
             if ($error != null) {
                 Pagelayout::postError($error);
+            }
+            if (!mb_check_encoding(file_get_contents($file['tmp_name']), 'UTF-8')) {
+                //convert from windows 1252 to utf8:
+                file_put_contents(
+                    $file['tmp_name'],
+                    iconv("Windows-1252", "UTF-8", file_get_contents($file['tmp_name']))
+                );
             }
 
             $serienbriefefolder = Folder::findOneBySQL("user_id = ? AND folder_type = 'SerienbriefeFolder'", array($GLOBALS['user']->id));
@@ -158,8 +165,8 @@ class WriteController extends PluginController
             "")->fetch(PDO::FETCH_ASSOC);
         if ($data->user_id && !$data->name) {
             $data->name = get_fullname($data->user_id, "no_title");
-            $data->anrede = ($user['geschlecht'] == 2 ? "Frau " : ($user['geschlecht'] == 1 ? "Herr " : "")). get_fullname($data->user_id, "full");
-            $data->sehrgeehrte = ($user['geschlecht'] == 2 ? "Sehr geehrte Frau " : ($user['geschlecht'] == 1 ? "Sehr geehrter Herr " : "Sehr geehrte/r ")). get_fullname($data->user_id, "full");
+            $data->anrede = ($user['geschlecht'] == 2 ? "Frau " : ($user['geschlecht'] == 1 ? "Herr " : "")). get_nachname($data->user_id);
+            $data->sehrgeehrte = ($user['geschlecht'] == 2 ? "Sehr geehrte Frau " : ($user['geschlecht'] == 1 ? "Sehr geehrter Herr " : "Sehr geehrte/r ")). get_nachname($data->user_id);
         }
         if ($data->user_id && !$data->email) {
             $data->email = $user['Email'];

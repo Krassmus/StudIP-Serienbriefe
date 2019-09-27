@@ -10,40 +10,14 @@
  */
 
 class AddAttributeTable extends Migration {
+
     public function up() {
-        DBManager::get()->exec(
-            "INSERT IGNORE INTO `config` (
-                `config_id` ,
-                `parent_id` ,
-                `field` ,
-                `value` ,
-                `is_default` ,
-                `type` ,
-                `range` ,
-                `section` ,
-                `position` ,
-                `mkdate` ,
-                `chdate` ,
-                `description` ,
-                `comment` ,
-                `message_template`
-            )
-            VALUES (
-                MD5('SERIENBRIEFE_ATTRIBUTE_TABLE'), 
-                '', 
-                'SERIENBRIEFE_ATTRIBUTE_TABLE', 
-                '', 
-                '0', 
-                'string', 
-                'global', 
-                'plugins', 
-                '0', 
-                UNIX_TIMESTAMP(), 
-                UNIX_TIMESTAMP(), 
-                'Name einer Tabelle mit weiteren Attributen. Form: Tabellenname:FeldMitUserId', 
-                '',
-                ''
-            );
-        ");
+        Config::get()->create("SERIENBRIEFE_ATTRIBUTE_TABLE", array(
+            'section' => "plugins",
+            'range' => "global",
+            'type' => "string",
+            'value' => "",
+            'description' => "Name einer Tabelle mit weiteren Attributen. Form: Tabellenname:FeldMitUserId"
+        ));
     }
 }

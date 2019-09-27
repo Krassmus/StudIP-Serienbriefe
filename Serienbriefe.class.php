@@ -57,14 +57,12 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
 
     public function __construct() {
         parent::__construct();
-        if (Navigation::hasItem("/start")) {
+        /*if (Navigation::hasItem("/start")) {
             $tab = new Navigation(_("Serienbriefe"), PluginEngine::getURL($this, array(), "write/overview"));
             Navigation::addItem("/start/serienbriefe", $tab);
-        }
+        }*/
         $tab = new Navigation(_("Serienbriefe"), PluginEngine::getURL($this, array(), "write/overview"));
-        Navigation::addItem("/serienbriefe", $tab);
-        $tab = new AutoNavigation(_("Serienbriefe"), PluginEngine::getURL($this, array(), "write/overview"));
-        Navigation::addItem("/serienbriefe/overview", $tab);
+        Navigation::addItem("/messaging/serienbriefe", $tab);
     }
 
     public function users_not_delivered_csv_action() {

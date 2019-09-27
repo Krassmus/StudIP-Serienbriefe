@@ -50,7 +50,7 @@ STUDIP.serienbriefe = {
         }
     },
     deleteTemplate: function (template_id) {
-        if (window.confirm("Soll das Template wirklich gelöscht werden?")) {
+        if (window.confirm("Soll das Template wirklich gelÃ¶scht werden?")) {
             window.location.href = STUDIP.URLHelper.getURL(STUDIP.ABSOLUTE_URI_STUDIP + "plugins.php/serienbriefe/write/overview", {
                 'delete_template' : template_id
             });
