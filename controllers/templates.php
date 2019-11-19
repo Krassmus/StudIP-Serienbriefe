@@ -10,7 +10,7 @@ class TemplatesController extends PluginController
         $this->utf8decode_xhr = true;
         parent::before_filter($action, $args);
         PageLayout::addScript($this->plugin->getPluginURL() . "/assets/serienbriefe.js");
-        Navigation::activateItem("/serienbriefe/overview");
+        Navigation::activateItem("/messaging/serienbriefe");
         PageLayout::setTitle(_("Serienbriefe-Templates"));
     }
 
