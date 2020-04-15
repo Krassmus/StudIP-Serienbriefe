@@ -7,7 +7,7 @@ class SerienbriefeFolder extends StandardFolder
         return _('Temporäre Anhänge der Serienbriefe');
     }
 
-    public function getIcon($role)
+    public function getIcon($role = Icon::DEFAULT_ROLE)
     {
         return Icon::create(
             $GLOBALS['ABSOLUTE_URI_STUDIP']."plugins_packages/data-quest/Serienbriefe/assets/".(count($this->getFiles())
