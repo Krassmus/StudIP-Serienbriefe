@@ -35,16 +35,25 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
     static public function setSerienbriefeData($data)
     {
         $GLOBALS['SERIENBRIEF_CSV'] = $data;
-        $_SESSION['SERIENBRIEF_CSV'] = gzcompress(json_encode($GLOBALS['SERIENBRIEF_CSV']));
+        if ($GLOBALS['SERIENBRIEFE_NO_COMPRESS']) {
+            $GLOBALS['user']->cfg->store("SERIENBRIEF_CSV", json_encode($GLOBALS['SERIENBRIEF_CSV']));
+        } else {
+            $_SESSION['SERIENBRIEF_CSV'] = gzcompress(json_encode($GLOBALS['SERIENBRIEF_CSV']));
+        }
     }
 
     static public function getSerienbriefeData()
     {
         if (!$GLOBALS['SERIENBRIEF_CSV']) {
-            if (!$_SESSION['SERIENBRIEF_CSV']) {
+            if ($GLOBALS['SERIENBRIEFE_NO_COMPRESS']) {
+                $content = $GLOBALS['user']->cfg->getValue("SERIENBRIEF_CSV");
+            } else {
+                $content = $_SESSION['SERIENBRIEF_CSV'] ? gzuncompress($_SESSION['SERIENBRIEF_CSV']) : null;
+            }
+            if (!$content) {
                 return array();
             }
-            $GLOBALS['SERIENBRIEF_CSV'] = json_decode(gzuncompress($_SESSION['SERIENBRIEF_CSV']), true);
+            $GLOBALS['SERIENBRIEF_CSV'] = json_decode($content, true);
         }
         return $GLOBALS['SERIENBRIEF_CSV'];
     }
