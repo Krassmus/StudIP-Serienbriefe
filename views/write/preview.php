@@ -16,10 +16,10 @@
                 <? endif ?>
             </select>
             <? if (count($GLOBALS['SERIENBRIEF_CSV']['content']) > 1) : ?>
-                <a href="#" onClick="if (jQuery('#serienbriefe_user_id > option:selected').prev().val()) jQuery('#serienbriefe_user_id').val(jQuery('#serienbriefe_user_id > option:selected').prev().val()); jQuery('#serienbriefe_user_id').change(); return false;">
+                <a href="#" onClick="if (jQuery('#serienbriefe_user_id > option:selected').prev().val()) jQuery('#serienbriefe_user_id').val(jQuery('#serienbriefe_user_id > option:selected').prev().val()); jQuery('#serienbriefe_user_id').change(); jQuery(this).closest('form').submit(); return false;">
                     <?= Icon::create("arr_1left", "clickable")->asImg(20, ['class' => "text-bottom"]) ?>
                 </a>
-                <a href="#" onClick="if (jQuery('#serienbriefe_user_id > option:selected').next().val()) jQuery('#serienbriefe_user_id').val(jQuery('#serienbriefe_user_id > option:selected').next().val()); jQuery('#serienbriefe_user_id').change(); return false;">
+                <a href="#" onClick="if (jQuery('#serienbriefe_user_id > option:selected').next().val()) jQuery('#serienbriefe_user_id').val(jQuery('#serienbriefe_user_id > option:selected').next().val()); jQuery('#serienbriefe_user_id').change(); jQuery(this).closest('form').submit(); return false;">
                     <?= Icon::create("arr_1right", "clickable")->asImg(20, ['class' => "text-bottom"]) ?>
                 </a>
             <? endif ?>
@@ -33,6 +33,7 @@
 
         <input type="hidden" name="subject" id="subject_delivery" value="<?= htmlReady($subject) ?>">
         <textarea style="display: none" name="message" id="message_delivery"><?= htmlReady($message) ?></textarea>
+        <input type="hidden" name="tags" value="<?= htmlReady(Request::get("tags")) ?>">
 
         <label>
             <input type="checkbox" name="do_not_send_as_email" value="1"<?= Request::get("do_not_send_as_email") ? " checked" : "" ?>>

@@ -1,0 +1,75 @@
+a {
+    cursor: pointer;
+}
+ul#fehler_protokoll {
+    margin: 0px;
+    padding: 2px;
+    list-style-type: none;
+    margin-bottom: 20px;
+}
+ul#fehler_protokoll > li {
+    background-color: #aa0022;
+    color: white;
+    margin: 5px;
+    padding: 3px;
+    font-size: 1.2em;
+}
+.sb_box {
+    margin: 12px;
+    margin-top: 7px;
+    margin-bottom: 7px;
+    padding: 4px;
+    border: 3px solid white;
+    background-color: #eaeaea;
+    border-radius: 10px;
+    box-shadow: 0px 0px 4px #c0c0c0;
+    font-size: 1.2em;
+
+}
+#replacements {
+    text-indent: -12px;
+}
+#replacements li {
+    padding-left: 12px;
+}
+#submit_button {
+    margin: 20px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+#preview_text {
+
+}
+input:-moz-placeholder {
+    color: rgba(0,0,0,0.4);
+}
+input::-webkit-input-placeholder {
+    color: rgba(0,0,0,0.4);
+}
+textarea:-moz-placeholder {
+    color: rgba(0,0,0,0.4);
+}
+textarea::-webkit-input-placeholder {
+    color: rgba(0,0,0,0.4);
+}
+
+.attachments input[type=checkbox]:checked + span {
+    text-decoration: line-through;
+}
+ul.tags {
+    display: inline-block;
+    > li {
+        display: inline-block;
+        .icon('before', 'tag', 'info', 16);
+        .deletetag {
+            .icon('after', 'trash', 'clickable', 16);
+        }
+    }
+    > li:after {
+        content: ",";
+    }
+    > li:last-child:after {
+        content: "";
+    }
+}

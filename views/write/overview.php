@@ -1,78 +1,3 @@
-<?php
-
-/*
- *  Copyright (c) 2012  Rasmus Fuhse <fuhse@data-quest.de>
- *
- *  This program is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU General Public License as
- *  published by the Free Software Foundation; either version 2 of
- *  the License, or (at your option) any later version.
- */
-?>
-
-    <style>
-        a {
-            cursor: pointer;
-        }
-        ul#fehler_protokoll {
-            margin: 0px;
-            padding: 2px;
-            list-style-type: none;
-            margin-bottom: 20px;
-        }
-        ul#fehler_protokoll > li {
-            background-color: #aa0022;
-            color: white;
-            margin: 5px;
-            padding: 3px;
-            font-size: 1.2em;
-        }
-        .sb_box {
-            margin: 12px;
-            margin-top: 7px;
-            margin-bottom: 7px;
-            padding: 4px;
-            border: 3px solid white;
-            background-color: #eaeaea;
-            border-radius: 10px;
-            box-shadow: 0px 0px 4px #c0c0c0;
-            font-size: 1.2em;
-
-        }
-        #replacements {
-            text-indent: -12px;
-        }
-        #replacements li {
-            padding-left: 12px;
-        }
-        #submit_button {
-            margin: 20px;
-            margin-left: auto;
-            margin-right: auto;
-            text-align: center;
-        }
-        #preview_text {
-
-        }
-        input:-moz-placeholder {
-            color: rgba(0,0,0,0.4);
-        }
-        input::-webkit-input-placeholder {
-            color: rgba(0,0,0,0.4);
-        }
-        textarea:-moz-placeholder {
-            color: rgba(0,0,0,0.4);
-        }
-        textarea::-webkit-input-placeholder {
-            color: rgba(0,0,0,0.4);
-        }
-
-        .attachments input[type=checkbox]:checked + span {
-            text-decoration: line-through;
-        }
-
-    </style>
-
 
 <? if (is_array(Serienbriefe::getSerienbriefeData()) && $GLOBALS['SERIENBRIEF_CSV']['header'] && count($GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("username", $GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("email", $GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("user_id", $GLOBALS['SERIENBRIEF_CSV']['header'])) : ?>
     <?= MessageBox::error("Die hochgeladenen Empfägerdaten enthalten nicht das Feld <i>username</i> oder <i>email</i>.") ?>
@@ -132,7 +57,7 @@
     <div style="margin: 20px; text-align: center; clear: both;">
         <label style="cursor: pointer;">
             <input type="file" name="add_attachment" style="display: none;" onChange="jQuery(this).closest('form').submit();">
-            <?= Icon::create("add", "clickable")->asImg(20, array('class' => "text-bottom")) ?>
+            <?= Icon::create("staple", "clickable")->asImg(20, array('class' => "text-bottom")) ?>
             <?= _("Datei für alle anhängen") ?>
         </label>
 
@@ -155,13 +80,30 @@
         <? endif ?>
     </div>
 
+    <div>
+        <?= _("Schlagworte") ?>:
+        <ul class="clean tags">
+            <? foreach ((array) $_SESSION['SERIENBRIEFE_TAGS'] as $tag) : ?>
+            <li>
+                <span><?= htmlReady($tag) ?></span>
+                <input type="hidden" name="tag[]" value="<?= htmlReady($tag) ?>">
+                <a href="" class="deletetag"></a>
+            </li>
+            <? endforeach ?>
+        </ul>
+        <input type="text" id="new_tag">
+        <a href="" class="add_tag">
+            <?= Icon::create("add", "clickable")->asImg(16, ['class' => "text-bottom"]) ?>
+        </a>
+    </div>
+
     <div style="margin: 20px; text-align: center; clear: both;">
         <label style="cursor: pointer; display: block;">
             <input type="file" name="csv_file" style="display: none;" onChange="jQuery(this).closest('form').submit();" id="csv_file">
         </label>
 
         <div style="text-align: center;">
-            <?= \Studip\LinkButton::create(_("Vorschau"), "#", array("onclick" => "jQuery('#preview_message').val(jQuery('#message').val()); jQuery('#preview_subject').val(jQuery('#subject').val()); jQuery('#preview_button').trigger('click'); return false;")) ?>
+            <?= \Studip\LinkButton::create(_("Vorschau"), "#", array("onclick" => "STUDIP.serienbriefe.syncValues(); jQuery('#preview_button').trigger('click'); return false;")) ?>
             <?= \Studip\LinkButton::create(_("Zurücksetzen"), URLHelper::getURL("?", array('reset' => 1))) ?>
         </div>
     </div>
@@ -215,9 +157,11 @@
 
 <form action="<?= PluginEngine::getLink($plugin, array(), "write/preview") ?>"
       data-dialog
-      style="display: none;" method="post">
+      style="display: none;"
+      method="post">
     <input type="text" id="preview_subject" name="subject">
     <textarea id="preview_message" name="message"></textarea>
+    <textarea id="tags" name="tags"><?= htmlReady(implode("\n", (array) $_SESSION['SERIENBRIEFE_TAGS'])) ?></textarea>
     <button id="preview_button"></button>
     <button id="save_template_button" formaction="<?= PluginEngine::getLink($plugin, array(), "templates/edit") ?>"></button>
 </form>
@@ -229,8 +173,6 @@ if (Request::get("edit_template")) : ?>
         jQuery(STUDIP.serienbriefe.adminTemplatesDialog);
     </script>
 <? endif;
-
-Sidebar::Get()->setImage("sidebar/mail-sidebar.png");
 
 $actions = new ActionsWidget();
 if ($some_users_correct) {

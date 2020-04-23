@@ -128,9 +128,9 @@ class WriteController extends PluginController
                 $this->user_id_column = "user_id";
             }
             $statement = DBManager::get()->prepare("
-                SELECT COLUMN_NAME 
-                FROM information_schema.COLUMNS 
-                WHERE TABLE_NAME = :table AND 
+                SELECT COLUMN_NAME
+                FROM information_schema.COLUMNS
+                WHERE TABLE_NAME = :table AND
                     TABLE_SCHEMA = :db;
             ");
             $statement->execute(array(
@@ -256,6 +256,7 @@ class WriteController extends PluginController
             if (is_array($GLOBALS['SERIENBRIEF_CSV']['content'])) {
                 $text_original = Request::get("message");
                 $subject_original = Request::get("subject");
+                $tags = preg_split("/\n/", Request::get("tags"), -1, PREG_SPLIT_NO_EMPTY);
                 foreach ($GLOBALS['SERIENBRIEF_CSV']['content'] as $user_data) {
                     $user_data = $this->getUserdata($user_data);
                     if ($user_data['user_id']) {
@@ -290,7 +291,10 @@ class WriteController extends PluginController
                             '',
                             '',
                             $subject,
-                            1
+                            1,
+                            'normal',
+                            $tags,
+                            false
                         );
                         if ($success) {
                             $count++;
