@@ -7,7 +7,6 @@ class TemplatesController extends PluginController
 
     function before_filter(&$action, &$args)
     {
-        $this->utf8decode_xhr = true;
         parent::before_filter($action, $args);
         PageLayout::addScript($this->plugin->getPluginURL() . "/assets/serienbriefe.js");
         Navigation::activateItem("/messaging/serienbriefe");
