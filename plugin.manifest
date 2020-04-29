@@ -1,7 +1,7 @@
 pluginclassname=Serienbriefe
 pluginname=Serienbriefe
 origin=data-quest
-version=3.2.2
+version=3.2.3
 studipMinVersion=4.0
 studipMaxVersion=4.5
 

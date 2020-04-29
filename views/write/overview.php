@@ -74,7 +74,7 @@
     </style>
 
 
-<? if (is_array(Serienbriefe::getSerienbriefeData()) && count($GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("username", $GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("email", $GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("user_id", $GLOBALS['SERIENBRIEF_CSV']['header'])) : ?>
+<? if (is_array(Serienbriefe::getSerienbriefeData()) && isset($GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("username", $GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("email", $GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("user_id", $GLOBALS['SERIENBRIEF_CSV']['header'])) : ?>
     <?= MessageBox::error("Die hochgeladenen Empfägerdaten enthalten nicht das Feld <i>username</i> oder <i>email</i>.") ?>
 <? endif ?>
 
@@ -277,7 +277,3 @@ $widget = new SidebarWidget();
 $widget->setTitle(_("Templates"));
 $widget->addElement(new WidgetElement($templates_select));
 Sidebar::Get()->addWidget($widget);
-
-if (count($infobox['content'][1]['eintrag']) === 0) {
-    unset($infobox['content'][1]);
-}

@@ -318,7 +318,7 @@ class WriteController extends PluginController
                 PageLayout::postMessage(MessageBox::success(sprintf("Nachricht wurde an %s Personen versendet.", $count)));
             }
             if (count($_SESSION['not_delivered_users']) > 0) {
-                PageLayout::postMessage(MessageBox::info(sprintf("An %s Personen wurde die Nachricht nicht versendet. %sBericht dazu%s.", count($_SESSION['not_delivered_users']), '<a href="'.PluginEngine::getLink($this, array(), 'users_not_delivered_csv').'">', '</a>')));
+                PageLayout::postMessage(MessageBox::info(sprintf("An %s Personen wurde die Nachricht nicht versendet. %sBericht dazu%s.", count($_SESSION['not_delivered_users']), '<a href="'.PluginEngine::getLink($this->plugin, array(), 'users_not_delivered_csv').'">', '</a>')));
             }
         }
         $this->response->add_header("X-Location", PluginEngine::getURL($this->plugin, array(), "write/overview"));
