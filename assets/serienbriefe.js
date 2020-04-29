@@ -26,6 +26,10 @@ STUDIP.serienbriefe = {
         if (choice === "save") {
             jQuery("#preview_subject").val(jQuery("#subject").val());
             jQuery("#preview_message").val(jQuery("#message").val());
+            jQuery("#tags").val("");
+            jQuery(".tags").each(function () {
+                jQuery("#tags").val(jQuery("#tags").val() + "\n" + jQuery(this).find("input").val());
+            });
             jQuery("#save_template_button").trigger("click");
             return;
         }
@@ -55,10 +59,32 @@ STUDIP.serienbriefe = {
                 'delete_template' : template_id
             });
         }
+    },
+    syncValues: function () {
+        jQuery('#preview_message').val(jQuery('#message').val());
+        jQuery('#tags').val('');
+        jQuery('.tags > li').each(function () {
+            jQuery("#tags").val(jQuery('#tags').val() + "\n" + jQuery(this).find('input').val());
+        });
+        jQuery('#preview_subject').val(jQuery('#subject').val());
     }
 };
 jQuery(function () {
     jQuery("input, textarea").focus(function () {
         STUDIP.serienbriefe.activeElement = this;
+    });
+
+    jQuery(function () {
+        jQuery(document).on("click", ".deletetag", function (event) {
+            jQuery(this).closest("li").remove();
+            return false;
+        });
+        jQuery(".add_tag").on("click", function () {
+            let tag = jQuery("#new_tag").val();
+            let li = jQuery("<li><span>" + tag + "</span><input type='hidden' name='tag[]' value='" + tag + "'><a href='' class='deletetag'></a></li>");
+            jQuery(".tags").append(li);
+            jQuery("#new_tag").focus().val("");
+            return false;
+        });
     });
 });

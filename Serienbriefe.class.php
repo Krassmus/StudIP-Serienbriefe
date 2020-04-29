@@ -35,16 +35,25 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
     static public function setSerienbriefeData($data)
     {
         $GLOBALS['SERIENBRIEF_CSV'] = $data;
-        $_SESSION['SERIENBRIEF_CSV'] = gzcompress(json_encode($GLOBALS['SERIENBRIEF_CSV']));
+        if ($GLOBALS['SERIENBRIEFE_NO_COMPRESS']) {
+            $GLOBALS['user']->cfg->store("SERIENBRIEF_CSV", json_encode($GLOBALS['SERIENBRIEF_CSV']));
+        } else {
+            $_SESSION['SERIENBRIEF_CSV'] = gzcompress(json_encode($GLOBALS['SERIENBRIEF_CSV']));
+        }
     }
 
     static public function getSerienbriefeData()
     {
         if (!$GLOBALS['SERIENBRIEF_CSV']) {
-            if (!$_SESSION['SERIENBRIEF_CSV']) {
+            if ($GLOBALS['SERIENBRIEFE_NO_COMPRESS']) {
+                $content = $GLOBALS['user']->cfg->getValue("SERIENBRIEF_CSV");
+            } else {
+                $content = $_SESSION['SERIENBRIEF_CSV'] ? gzuncompress($_SESSION['SERIENBRIEF_CSV']) : null;
+            }
+            if (!$content) {
                 return array();
             }
-            $GLOBALS['SERIENBRIEF_CSV'] = json_decode(gzuncompress($_SESSION['SERIENBRIEF_CSV']), true);
+            $GLOBALS['SERIENBRIEF_CSV'] = json_decode($content, true);
         }
         return $GLOBALS['SERIENBRIEF_CSV'];
     }
@@ -57,15 +66,17 @@ class Serienbriefe extends StudIPPlugin implements SystemPlugin {
 
     public function __construct() {
         parent::__construct();
-        /*if (Navigation::hasItem("/start")) {
-            $tab = new Navigation(_("Serienbriefe"), PluginEngine::getURL($this, array(), "write/overview"));
-            Navigation::addItem("/start/serienbriefe", $tab);
-        }*/
         $tab = new Navigation(_("Serienbriefe"), PluginEngine::getURL($this, array(), "write/overview"));
         Navigation::addItem("/messaging/serienbriefe", $tab);
 
         $tab = new Navigation(_("Serienbriefe"), PluginEngine::getURL($this, array(), "write/overview"));
         Navigation::addItem("/start/serienbriefe", $tab);
+    }
+
+    public function perform($unconsumed_path)
+    {
+        $this->addStylesheet("assets/serienbriefe.less");
+        parent::perform($unconsumed_path);
     }
 
     public function users_not_delivered_csv_action() {
