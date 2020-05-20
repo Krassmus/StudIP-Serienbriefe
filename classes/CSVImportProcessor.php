@@ -33,6 +33,10 @@ class CSVImportProcessor_serienbriefe {
 
     static public function getCSVDataFromFile($file_path) {
         $data = file_get_contents($file_path);
+        if (ord($data[0]) == 239) {
+            $bom = pack('H*','EFBBBF');
+            $data = preg_replace("/^$bom/", '', $data);
+        }
         if ($data && !json_encode(array('data' => $data))) {
             $data = iconv("Windows-1252", "UTF-8", $data);
         }

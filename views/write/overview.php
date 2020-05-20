@@ -1,6 +1,6 @@
 
 <? if (is_array(Serienbriefe::getSerienbriefeData()) && $GLOBALS['SERIENBRIEF_CSV']['header'] && count($GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("username", $GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("email", $GLOBALS['SERIENBRIEF_CSV']['header']) && !in_array("user_id", $GLOBALS['SERIENBRIEF_CSV']['header'])) : ?>
-    <?= MessageBox::error("Die hochgeladenen Empfägerdaten enthalten nicht das Feld <i>username</i> oder <i>email</i>.") ?>
+    <?= MessageBox::error("Die hochgeladenen Empfängerdaten enthalten nicht das Feld <i>username</i> oder <i>email</i>.") ?>
 <? endif ?>
 
 <form name="message" action="<?= URLHelper::getLink("?", array('reset' => 0)) ?>" method="post" enctype="multipart/form-data">
