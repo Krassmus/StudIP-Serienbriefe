@@ -73,18 +73,6 @@ class WriteController extends PluginController
                 'size' => $file['size']
             );
             $output['message_id'] = Request::option("message_id");
-            $error = MessageFolder::validateUpload($file, $GLOBALS['user']->id);
-            if ($error != null) {
-                Pagelayout::postError($error);
-            }
-            /*
-            if (!mb_check_encoding(file_get_contents($file['tmp_name']), 'UTF-8')) {
-                //convert from windows 1252 to utf8:
-                file_put_contents(
-                    $file['tmp_name'],
-                    iconv("Windows-1252", "UTF-8", file_get_contents($file['tmp_name']))
-                );
-            }*/
 
             $serienbriefefolder = Folder::findOneBySQL("user_id = ? AND folder_type = 'SerienbriefeFolder'", array($GLOBALS['user']->id));
 
@@ -103,21 +91,30 @@ class WriteController extends PluginController
             }
 
             $serienbriefefolder = $serienbriefefolder->getTypedFolder();
+            $error_message = _('Die hochgeladene Datei kann nicht verarbeitet werden!');
 
-            $file_ref = $serienbriefefolder->createFile($file);
+            $uploaded = FileManager::handleFileUpload(
+                [
+                    'tmp_name' => [$file['tmp_name']],
+                    'name' => [$file['name']],
+                    'size' => [$file['size']],
+                    'type' => [$file['type']],
+                    'error' => [$file['error']]
+                ],
+                $serienbriefefolder,
+                $GLOBALS['user']->id
+            );
 
-            if (!$file_ref instanceof FileRef) {
-                $error_message = _('Die hochgeladene Datei kann nicht verarbeitet werden!');
-
-                if ($file_ref instanceof MessageBox) {
-                    $error_message .= ' ' . $file_ref->message;
-                }
-                PageLayout::postError($error_message);
+            if ($uploaded['error']) {
+                Pagelayout::postError($error_message, $uploaded['error']);
             }
 
-            $output['document_id'] = $file_ref->id;
-
-            $_SESSION['SERIENBRIEFE_ATTACHMENTS'][] = $file_ref->id;
+            if (!$uploaded['files'][0] instanceof FileType) {
+                PageLayout::postError($error_message);
+            } else {
+                $output['document_id'] = $uploaded['files'][0]->getId();
+                $_SESSION['SERIENBRIEFE_ATTACHMENTS'][] = $uploaded['files'][0]->getId();
+            }
         }
 
         if (Config::get()->SERIENBRIEFE_ATTRIBUTE_TABLE) {
@@ -273,8 +270,8 @@ class WriteController extends PluginController
                             $message_top_folder = MessageFolder::findTopFolder($range_id) ?: MessageFolder::createTopFolder($range_id);
 
                             foreach ($_SESSION['SERIENBRIEFE_ATTACHMENTS'] as $file_id) {
-                                $document = new FileRef($file_id);
-                                $new_file_ref = FileManager::copyFileRef(
+                                $document = new StandardFile(new FileRef($file_id));
+                                $new_file_ref = FileManager::copyFile(
                                     $document,
                                     $message_top_folder,
                                     User::findCurrent()
