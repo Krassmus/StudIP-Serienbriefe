@@ -36,17 +36,25 @@ class SerienbriefeFolder extends StandardFolder
 
     public function isWritable($user_id)
     {
-        return false;
+        return $this->user
+            && $user_id === $this->user->id;
     }
 
     public function isEditable($user_id)
     {
-        return false;
+        return $this->user
+            && $user_id === $this->user->id;
     }
 
     public function isSubfolderAllowed($user_id)
     {
         //this folder type does not allow subfolders!
         return false;
+    }
+
+    public function validateUpload(FileType $newfile, $user_id)
+    {
+        $upload_type = FileManager::getUploadTypeConfig($this->range_id, $user_id);
+        return $this->getValidationMessages($upload_type, $newfile);
     }
 }
