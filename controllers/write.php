@@ -153,6 +153,20 @@ class WriteController extends PluginController
             $data->user_id = get_userid($data->username);
         } elseif ($data->email) {
             $data->user_id = $db->query("SELECT user_id FROM auth_user_md5 WHERE Email = ".$db->quote($data->email)." ")->fetch(PDO::FETCH_COLUMN, 0);
+        } else {
+            foreach (DataField::getDataFields('user') as $datafield) {
+                $name = $datafield['name'];
+                if (isset($data->$name) && $data->$name) {
+                    $entries = DatafieldEntryModel::findBySQL("`datafield_id` = :datafield_id AND `content` = :content", [
+                        'datafield_id' => $datafield->getId(),
+                        'content' => $data->$name
+                    ]);
+                    if (count($entries) === 1) { //nur wenn es genau eine Person gibt mit dieser Angabe
+                        $data->user_id = $entries[0]['range_id'];
+                        break;
+                    }
+                }
+            }
         }
         $user = $db->query(
             "SELECT * " .
