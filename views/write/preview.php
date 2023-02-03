@@ -2,11 +2,11 @@
     <ul id="fehler_protokoll"></ul>
     <div style="text-align: center;">
         <label><?= _("Vorschau für ") ?>
-            <select name="user_id" id="serienbriefe_user_id" onChange="jQuery(this).closest('form').submit();">
+            <select name="line_id" id="serienbriefe_user_id" onChange="jQuery(this).closest('form').submit();">
                 <? if (count($GLOBALS['SERIENBRIEF_CSV']['content'])) : ?>
-                    <? foreach ($GLOBALS['SERIENBRIEF_CSV']['content'] as $user_data) :
+                    <? foreach ($GLOBALS['SERIENBRIEF_CSV']['content'] as $line_id => $user_data) :
                         if ($user_data['user_id']) : ?>
-                            <option value="<?= htmlReady($user_data['user_id']) ?>"<?= $user_data['user_id'] === Request::option("user_id") ? " selected" : "" ?>>
+                            <option value="<?= htmlReady($line_id) ?>"<?= $line_id == Request::option("line_id") ? " selected" : "" ?>>
                                 <?= htmlReady($user_data['name'] ?: get_fullname($user_data['user_id'])) ?>
                             </option>
                         <? endif;

@@ -212,14 +212,10 @@ class WriteController extends PluginController
         $this->subject = Request::get("subject");
         $this->message = Request::get("message");
 
-        if (Request::option("user_id")) {
-            $this->user_id = Request::option("user_id");
-        } else {
-            $this->user_id = $GLOBALS['SERIENBRIEF_CSV']['content'][0]['user_id'];
-        }
-        foreach ((array) $GLOBALS['SERIENBRIEF_CSV']['content'] as $l) {
-            if ($l['user_id'] === $this->user_id) {
+        foreach ((array) $GLOBALS['SERIENBRIEF_CSV']['content'] as $line_id => $l) {
+            if ($line_id == Request::option('line_id')) {
                 $line = $l;
+                $this->user_id = $l['user_id'];
                 break;
             }
         }
